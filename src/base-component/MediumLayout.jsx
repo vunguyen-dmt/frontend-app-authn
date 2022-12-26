@@ -24,7 +24,7 @@ const MediumLayout = ({ intl }) => (
               )}
             >
               <span className="mr-2">{intl.formatMessage(messages['start.learning'])}</span>
-              <span className="text-accent-a d-inline-block">
+              <span className="text-white d-inline-block">
                 {intl.formatMessage(messages['with.site.name'], { siteName: getConfig().SITE_NAME })}
               </span>
             </h1>

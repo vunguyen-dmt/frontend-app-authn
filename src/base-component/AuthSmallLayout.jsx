@@ -20,7 +20,7 @@ const AuthSmallLayout = ({ intl, username }) => (
         </h1>
         <h2 className="h1">
           {intl.formatMessage(messages['complete.your.profile.1'])}
-          <div className="text-accent-a">
+          <div className="text-white">
             {intl.formatMessage(messages['complete.your.profile.2'])}
           </div>
         </h2>
