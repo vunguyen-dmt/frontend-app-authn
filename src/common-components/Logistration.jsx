@@ -61,14 +61,10 @@ const Logistration = (props) => {
     </div>
   );
 
-  function InsertChatbot() {
+  const InsertChatbot = () => {
     const script = document.createElement('script');
-    script.text = `var eventMethod=window.addEventListener?"addEventListener":"attachEvent",eventer=window[eventMethod],messageEvent="attachEvent"==eventMethod?"onmessage":"message";
-    eventer(messageEvent,function(e){e.message,e&&e.data&&"isBotOpen"in e.data&&((isBotOpen=e.data.isBotOpen)?(document.getElementById("ga-help-bot").classList="ga-chat-bot-opened",
-    window.innerWidth<992&&(document.body.style.overflow="hidden")):(document.getElementById("ga-help-bot").classList="ga-chat-bot-closed",document.body.style.overflow="auto"))},!1);
-    var anonymousId=window.location.host+":"+new Date().getTime(),chatbox=document.createElement("div");chatbox.id="ga-help-bot",chatbox.classList="ga-chat-bot-closed";
-    var iframe=document.createElement("iframe");iframe.src="https://learner-help-bot.goamazing.org?languageCode=vi&allowOpenPostInNewWindow=yes&anonymousId="+anonymousId,
-    iframe.frameBorder=0,iframe.height="100%",iframe.width="100%",iframe.allow="fullscreen *",chatbox.appendChild(iframe),document.body.appendChild(chatbox);`
+    script.type = 'text/javascript';
+    script.src = 'https://learner-help-bot.goamazing.org/assets/js/help-bot.min.js';
     script.async = true;
     document.body.appendChild(script);
   }
