@@ -9,7 +9,6 @@ import messages from './messages';
 
 const AuthMediumLayout = ({ intl, username }) => (
   <>
-    <div className="w-100 medium-screen-top-stripe" />
     <div className="w-100 p-0 mb-3 d-flex">
       <div className="col-md-10 bg-light-200">
         <Hyperlink destination={getConfig().MARKETING_SITE_BASE_URL}>
@@ -23,7 +22,7 @@ const AuthMediumLayout = ({ intl, username }) => (
             </h1>
             <h2 className="display-1">
               {intl.formatMessage(messages['complete.your.profile.1'])}
-              <div className="text-accent-a">
+              <div className="text-white">
                 {intl.formatMessage(messages['complete.your.profile.2'])}
               </div>
             </h2>

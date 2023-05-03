@@ -9,7 +9,6 @@ import messages from './messages';
 
 const AuthSmallLayout = ({ intl, username }) => (
   <div className="min-vw-100 bg-light-200">
-    <div className="col-md-12 small-screen-top-stripe" />
     <Hyperlink destination={getConfig().MARKETING_SITE_BASE_URL}>
       <Image className="logo-small" alt={getConfig().SITE_NAME} src={getConfig().LOGO_URL} />
     </Hyperlink>
@@ -21,7 +20,7 @@ const AuthSmallLayout = ({ intl, username }) => (
         </h1>
         <h2 className="h1">
           {intl.formatMessage(messages['complete.your.profile.1'])}
-          <div className="text-accent-a">
+          <div className="text-white">
             {intl.formatMessage(messages['complete.your.profile.2'])}
           </div>
         </h2>
