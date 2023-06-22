@@ -1,17 +1,15 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import CookiePolicyBanner from '@edx/frontend-component-cookie-policy-banner';
 import { getConfig, mergeConfig } from '@edx/frontend-platform';
-import * as analytics from '@edx/frontend-platform/analytics';
-import * as auth from '@edx/frontend-platform/auth';
+import { sendPageEvent } from '@edx/frontend-platform/analytics';
 import { injectIntl, IntlProvider } from '@edx/frontend-platform/i18n';
 import { mount } from 'enzyme';
 import { MemoryRouter } from 'react-router-dom';
 import renderer from 'react-test-renderer';
 import configureStore from 'redux-mock-store';
 
-import { COMPLETE_STATE, PENDING_STATE } from '../../data/constants';
+import { COMPLETE_STATE, LOGIN_PAGE, PENDING_STATE } from '../../data/constants';
 import {
   loginRemovePasswordResetBanner, loginRequest, loginRequestFailure, loginRequestReset, setLoginFormData,
 } from '../data/actions';
@@ -19,21 +17,19 @@ import { INTERNAL_SERVER_ERROR } from '../data/constants';
 import LoginFailureMessage from '../LoginFailure';
 import LoginPage from '../LoginPage';
 
-jest.mock('@edx/frontend-platform/analytics');
-jest.mock('@edx/frontend-platform/auth');
-
-analytics.sendTrackEvent = jest.fn();
-analytics.sendPageEvent = jest.fn();
-auth.getAuthService = jest.fn();
+jest.mock('@edx/frontend-platform/analytics', () => ({
+  sendPageEvent: jest.fn(),
+  sendTrackEvent: jest.fn(),
+}));
+jest.mock('@edx/frontend-platform/auth', () => ({
+  getAuthService: jest.fn(),
+}));
 
 const IntlLoginFailureMessage = injectIntl(LoginFailureMessage);
 const IntlLoginPage = injectIntl(LoginPage);
 const mockStore = configureStore();
 
 describe('LoginPage', () => {
-  mergeConfig({
-    USER_SURVEY_COOKIE_NAME: process.env.USER_SURVEY_COOKIE_NAME,
-  });
   let props = {};
   let store = {};
   let loginFormData = {};
@@ -72,7 +68,7 @@ describe('LoginPage', () => {
   const ssoProvider = {
     id: 'oa2-apple-id',
     name: 'Apple',
-    iconClass: null,
+    iconClass: 'apple',
     iconImage: 'https://openedx.devstack.lms/logo.png',
     loginUrl: '/auth/login/apple-id/?auth_entry=login&next=/dashboard',
   };
@@ -236,6 +232,162 @@ describe('LoginPage', () => {
     expect(loginPage.text().includes('Or sign in with:')).toBe(false);
   });
 
+  it('should show sign-in header providers (ENABLE ENTERPRISE LOGIN)', () => {
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: '',
+    });
+
+    store = mockStore({
+      ...initialState,
+      commonComponents: {
+        ...initialState.commonComponents,
+        thirdPartyAuthContext: {
+          ...initialState.commonComponents.thirdPartyAuthContext,
+          providers: [{
+            ...ssoProvider,
+          }],
+        },
+      },
+    });
+
+    const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
+    expect(loginPage.text().includes('Or sign in with:')).toBe(true);
+    expect(loginPage.text().includes('Company or school credentials')).toBe(true);
+    expect(loginPage.text().includes('Institution/campus credentials')).toBe(false);
+  });
+
+  it('should show sign-in header with providers (DISABLE ENTERPRISE LOGIN)', () => {
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: true,
+    });
+
+    store = mockStore({
+      ...initialState,
+      commonComponents: {
+        ...initialState.commonComponents,
+        thirdPartyAuthContext: {
+          ...initialState.commonComponents.thirdPartyAuthContext,
+          providers: [{
+            ...ssoProvider,
+          }],
+        },
+      },
+    });
+
+    const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
+    expect(loginPage.text().includes('Or sign in with:')).toBe(true);
+    expect(loginPage.text().includes('Company or school credentials')).toBe(false);
+    expect(loginPage.text().includes('Institution/campus credentials')).toBe(false);
+
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: '',
+    });
+  });
+
+  it('should not show sign-in header without Providers and secondary Providers (ENABLE ENTERPRISE LOGIN)', () => {
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: '',
+    });
+
+    store = mockStore({
+      ...initialState,
+      commonComponents: {
+        ...initialState.commonComponents,
+        thirdPartyAuthContext: {
+          ...initialState.commonComponents.thirdPartyAuthContext,
+        },
+      },
+    });
+
+    const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
+    expect(loginPage.text().includes('Or sign in with:')).toBe(false);
+    expect(loginPage.text().includes('Company or school credentials')).toBe(false);
+    expect(loginPage.text().includes('Institution/campus credentials')).toBe(false);
+  });
+
+  it('should not show sign-in header without Providers and secondary Providers (DISABLE ENTERPRISE LOGIN)', () => {
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: true,
+    });
+
+    store = mockStore({
+      ...initialState,
+      commonComponents: {
+        ...initialState.commonComponents,
+        thirdPartyAuthContext: {
+          ...initialState.commonComponents.thirdPartyAuthContext,
+        },
+      },
+    });
+
+    const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
+    expect(loginPage.text().includes('Or sign in with:')).toBe(false);
+    expect(loginPage.text().includes('Company or school credentials')).toBe(false);
+    expect(loginPage.text().includes('Institution/campus credentials')).toBe(false);
+
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: '',
+    });
+  });
+
+  it('should show sign-in header with secondary Providers and without Providers', () => {
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: true,
+    });
+
+    store = mockStore({
+      ...initialState,
+      commonComponents: {
+        ...initialState.commonComponents,
+        thirdPartyAuthContext: {
+          ...initialState.commonComponents.thirdPartyAuthContext,
+          secondaryProviders: [{
+            ...secondaryProviders,
+          }],
+        },
+      },
+    });
+
+    const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
+    expect(loginPage.text().includes('Or sign in with:')).toBe(true);
+    expect(loginPage.text().includes('Institution/campus credentials')).toBe(true);
+
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: '',
+    });
+  });
+
+  it('should show sign-in header with Providers and secondary Providers', () => {
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: true,
+    });
+
+    store = mockStore({
+      ...initialState,
+      commonComponents: {
+        ...initialState.commonComponents,
+        thirdPartyAuthContext: {
+          ...initialState.commonComponents.thirdPartyAuthContext,
+          providers: [{
+            ...ssoProvider,
+          }],
+          secondaryProviders: [{
+            ...secondaryProviders,
+          }],
+        },
+      },
+    });
+
+    const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
+    expect(loginPage.text().includes('Or sign in with:')).toBe(true);
+    expect(loginPage.text().includes('Company or school credentials')).toBe(false);
+    expect(loginPage.text().includes('Institution/campus credentials')).toBe(true);
+
+    mergeConfig({
+      DISABLE_ENTERPRISE_LOGIN: '',
+    });
+  });
+
   // ******** test alert messages ********
 
   it('should match login error message', () => {
@@ -258,7 +410,7 @@ describe('LoginPage', () => {
                               + 'to the courses you are enrolled in. Sign in to continue.';
 
     delete window.location;
-    window.location = { href: getConfig().BASE_URL.concat('/login'), search: '?account_activation_status=success' };
+    window.location = { href: getConfig().BASE_URL.concat(LOGIN_PAGE), search: '?account_activation_status=success' };
 
     const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
     expect(loginPage.find('div#account-activation-message').text()).toEqual(activationMessage);
@@ -283,6 +435,23 @@ describe('LoginPage', () => {
 
     const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
     expect(loginPage.find('#tpa-alert').find('p').text()).toEqual(expectedMessage);
+  });
+
+  it('should show tpa authentication fails error message', () => {
+    store = mockStore({
+      ...initialState,
+      commonComponents: {
+        ...initialState.commonComponents,
+        thirdPartyAuthContext: {
+          ...initialState.commonComponents.thirdPartyAuthContext,
+          currentProvider: null,
+          errorMessage: 'An error occured',
+        },
+      },
+    });
+
+    const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
+    expect(loginPage.find('#login-failure-alert').find('p').text()).toContain('An error occured');
   });
 
   it('should match invalid login form error message', () => {
@@ -396,8 +565,7 @@ describe('LoginPage', () => {
     });
 
     delete window.location;
-    window.location = { href: getConfig().BASE_URL.concat('/login'), search: `?next=/dashboard&tpa_hint=${ssoProvider.id}` };
-    ssoProvider.iconImage = null;
+    window.location = { href: getConfig().BASE_URL.concat(LOGIN_PAGE), search: `?next=/dashboard&tpa_hint=${ssoProvider.id}` };
 
     const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
     expect(loginPage.find(`button#${ssoProvider.id}`).find('span').text()).toEqual(ssoProvider.name);
@@ -419,7 +587,7 @@ describe('LoginPage', () => {
     });
 
     delete window.location;
-    window.location = { href: getConfig().BASE_URL.concat('/login'), search: `?next=/dashboard&tpa_hint=${secondaryProviders.id}` };
+    window.location = { href: getConfig().BASE_URL.concat(LOGIN_PAGE), search: `?next=/dashboard&tpa_hint=${secondaryProviders.id}` };
     secondaryProviders.iconImage = null;
 
     mount(reduxWrapper(<IntlLoginPage {...props} />));
@@ -444,8 +612,7 @@ describe('LoginPage', () => {
     });
 
     delete window.location;
-    window.location = { href: getConfig().BASE_URL.concat('/login'), search: '?next=/dashboard&tpa_hint=invalid' };
-    ssoProvider.iconImage = null;
+    window.location = { href: getConfig().BASE_URL.concat(LOGIN_PAGE), search: '?next=/dashboard&tpa_hint=invalid' };
 
     const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
     expect(loginPage.find(`button#${ssoProvider.id}`).find('span#provider-name').text()).toEqual(`${ssoProvider.name}`);
@@ -455,16 +622,54 @@ describe('LoginPage', () => {
     });
   });
 
-  // ******** miscellaneous tests ********
+  it('should render other ways to sign in button', () => {
+    store = mockStore({
+      ...initialState,
+      commonComponents: {
+        ...initialState.commonComponents,
+        thirdPartyAuthContext: {
+          ...initialState.commonComponents.thirdPartyAuthContext,
+          providers: [ssoProvider],
+        },
+        thirdPartyAuthApiStatus: COMPLETE_STATE,
+      },
+    });
 
-  it('should render cookie banner', () => {
+    delete window.location;
+    window.location = { href: getConfig().BASE_URL.concat(LOGIN_PAGE), search: `?tpa_hint=${ssoProvider.id}` };
+
     const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
-    expect(loginPage.find(<CookiePolicyBanner />)).toBeTruthy();
+    expect(loginPage.find('button#other-ways-to-sign-in').text()).toEqual('Show me other ways to sign in or register');
   });
+
+  it('should render other ways to sign in button when public account creation disabled', () => {
+    mergeConfig({
+      ALLOW_PUBLIC_ACCOUNT_CREATION: false,
+    });
+    store = mockStore({
+      ...initialState,
+      commonComponents: {
+        ...initialState.commonComponents,
+        thirdPartyAuthContext: {
+          ...initialState.commonComponents.thirdPartyAuthContext,
+          providers: [ssoProvider],
+        },
+        thirdPartyAuthApiStatus: COMPLETE_STATE,
+      },
+    });
+
+    delete window.location;
+    window.location = { href: getConfig().BASE_URL.concat(LOGIN_PAGE), search: `?tpa_hint=${ssoProvider.id}` };
+
+    const loginPage = mount(reduxWrapper(<IntlLoginPage {...props} />));
+    expect(loginPage.find('button#other-ways-to-sign-in').text()).toEqual('Show me other ways to sign in');
+  });
+
+  // ******** miscellaneous tests ********
 
   it('should send page event when login page is rendered', () => {
     mount(reduxWrapper(<IntlLoginPage {...props} />));
-    expect(analytics.sendPageEvent).toHaveBeenCalledWith('login_and_registration', 'login');
+    expect(sendPageEvent).toHaveBeenCalledWith('login_and_registration', 'login');
   });
 
   it('tests that form is only scrollable on form submission', () => {
@@ -475,21 +680,6 @@ describe('LoginPage', () => {
 
     expect(loginPage.find(<IntlLoginFailureMessage />)).toBeTruthy();
     expect(loginPage.find('LoginPage').state('isSubmitted')).toEqual(true);
-  });
-
-  it('should set login survey cookie', () => {
-    store = mockStore({
-      ...initialState,
-      login: {
-        ...initialState.login,
-        loginResult: {
-          success: true,
-        },
-      },
-    });
-
-    renderer.create(reduxWrapper(<IntlLoginPage {...props} />));
-    expect(document.cookie).toMatch(`${getConfig().USER_SURVEY_COOKIE_NAME}=login`);
   });
 
   it('should reset login form errors', () => {

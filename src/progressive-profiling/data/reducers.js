@@ -1,18 +1,17 @@
+import { SAVE_USER_PROFILE } from './actions';
 import {
   DEFAULT_STATE, PENDING_STATE,
 } from '../../data/constants';
-import { SAVE_USER_PROFILE } from './actions';
 
 export const defaultState = {
   extendedProfile: [],
   fieldDescriptions: {},
-  formRenderState: DEFAULT_STATE,
   success: false,
   submitState: DEFAULT_STATE,
   showError: false,
 };
 
-const reducer = (state = defaultState, action) => {
+const reducer = (state = defaultState, action = {}) => {
   switch (action.type) {
     case SAVE_USER_PROFILE.BEGIN:
       return {

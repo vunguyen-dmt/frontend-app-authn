@@ -1,5 +1,6 @@
 export { default as RedirectLogistration } from './RedirectLogistration';
 export { default as registerIcons } from './RegisterFaIcons';
+export { default as EmbeddedRegistrationRoute } from './EmbeddedRegistrationRoute';
 export { default as UnAuthOnlyRoute } from './UnAuthOnlyRoute';
 export { default as NotFoundPage } from './NotFoundPage';
 export { default as SocialAuthProviders } from './SocialAuthProviders';
@@ -11,4 +12,4 @@ export { default as saga } from './data/sagas';
 export { storeName } from './data/selectors';
 export { default as FormGroup } from './FormGroup';
 export { default as PasswordField } from './PasswordField';
-export { default as Logistration } from './Logistration';
+export { default as Zendesk } from './Zendesk';

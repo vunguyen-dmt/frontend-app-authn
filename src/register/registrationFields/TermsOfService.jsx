@@ -1,21 +1,22 @@
 import React from 'react';
 
 import { getConfig } from '@edx/frontend-platform';
-import { FormattedMessage, injectIntl, intlShape } from '@edx/frontend-platform/i18n';
+import { FormattedMessage, useIntl } from '@edx/frontend-platform/i18n';
 import { Form, Hyperlink } from '@edx/paragon';
 import PropTypes from 'prop-types';
 
 import messages from '../messages';
 
 const TermsOfService = (props) => {
+  const { formatMessage } = useIntl();
   const {
-    intl, errorMessage, onChangeHandler, value,
+    errorMessage, onChangeHandler, value,
   } = props;
 
   return (
     <div id="terms-of-service" className="micro text-muted">
       <Form.Checkbox
-        className="opt-checkbox mt-1"
+        className="form-field--checkbox mt-1"
         id="tos"
         checked={value}
         name="terms_of_service"
@@ -24,14 +25,14 @@ const TermsOfService = (props) => {
       >
         <FormattedMessage
           id="register.page.terms.of.service"
-          defaultMessage="I agree to the {platformName} {termsOfService}"
+          defaultMessage="I agree to the {platformName}&nbsp;{termsOfService}"
           description="Text that appears on registration form stating terms of service.
                        It is a legal document that users must agree to."
           values={{
             platformName: getConfig().SITE_NAME,
             termsOfService: (
               <Hyperlink variant="muted" destination={getConfig().TOS_LINK || '#'} target="_blank">
-                {intl.formatMessage(messages['terms.of.service'])}
+                {formatMessage(messages['terms.of.service'])}
               </Hyperlink>
             ),
           }}
@@ -52,10 +53,9 @@ TermsOfService.defaultProps = {
 };
 
 TermsOfService.propTypes = {
-  intl: intlShape.isRequired,
   errorMessage: PropTypes.string,
   onChangeHandler: PropTypes.func.isRequired,
   value: PropTypes.bool,
 };
 
-export default injectIntl(TermsOfService);
+export default TermsOfService;

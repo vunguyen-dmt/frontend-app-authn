@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { injectIntl, intlShape } from '@edx/frontend-platform/i18n';
+import { useIntl } from '@edx/frontend-platform/i18n';
 import { Alert, Icon } from '@edx/paragon';
 import { Close, Error } from '@edx/paragon/icons';
 import PropTypes from 'prop-types';
@@ -9,8 +9,8 @@ import { FormGroup } from '../../common-components';
 import messages from '../messages';
 
 const EmailField = (props) => {
+  const { formatMessage } = useIntl();
   const {
-    intl,
     emailSuggestion,
     handleSuggestionClick,
     handleOnClose,
@@ -19,27 +19,27 @@ const EmailField = (props) => {
   const renderEmailFeedback = () => {
     if (emailSuggestion.type === 'error') {
       return (
-        <Alert variant="danger" className="email-error-alert mt-1" icon={Error}>
-          <span className="alert-text">
-            {intl.formatMessage(messages['did.you.mean.alert.text'])}{' '}
+        <Alert variant="danger" className="email-suggestion-alert-error mt-1" icon={Error}>
+          <span className="email-suggestion__text">
+            {formatMessage(messages['did.you.mean.alert.text'])}{' '}
             <Alert.Link
               href="#"
               name="email"
               onClick={handleSuggestionClick}
             >
               {emailSuggestion.suggestion}
-            </Alert.Link>?<Icon src={Close} className="alert-close" onClick={handleOnClose} tabIndex="0" />
+            </Alert.Link>?<Icon src={Close} className="email-suggestion__close" onClick={handleOnClose} tabIndex="0" />
           </span>
         </Alert>
       );
     }
     return (
       <span id="email-warning" className="small">
-        {intl.formatMessage(messages['did.you.mean.alert.text'])}:{' '}
+        {formatMessage(messages['did.you.mean.alert.text'])}:{' '}
         <Alert.Link
           href="#"
           name="email"
-          className="email-warning-alert-link"
+          className="email-suggestion-alert-warning"
           onClick={handleSuggestionClick}
         >
           {emailSuggestion.suggestion}
@@ -73,10 +73,9 @@ EmailField.propTypes = {
     suggestion: PropTypes.string,
     type: PropTypes.string,
   }),
-  intl: intlShape.isRequired,
   value: PropTypes.string.isRequired,
   handleOnClose: PropTypes.func.isRequired,
   handleSuggestionClick: PropTypes.func.isRequired,
 };
 
-export default injectIntl(EmailField);
+export default EmailField;

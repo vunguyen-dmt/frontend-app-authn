@@ -1,6 +1,7 @@
 export TRANSIFEX_RESOURCE = frontend-app-authn
-transifex_langs = "ar,fr,es_419,zh_CN,it_IT,pt_PT,de_DE,uk,ru,hi"
+transifex_langs = "ar,fr,es_419,zh_CN,pt,it,de,uk,ru,hi,fr_CA,it_IT,pt_PT,de_DE"
 
+intl_imports = ./node_modules/.bin/intl-imports.js
 transifex_utils = ./node_modules/.bin/transifex-utils.js
 i18n = ./src/i18n
 transifex_input = $(i18n)/transifex_input.json
@@ -42,11 +43,37 @@ push_translations:
 	# Pushing comments to Transifex...
 	./node_modules/@edx/reactifex/bash_scripts/put_comments_v3.sh
 
+ifeq ($(OPENEDX_ATLAS_PULL),)
 # Pulls translations from Transifex.
 pull_translations:
 	tx pull -t -f --mode reviewed --languages=$(transifex_langs)
+else
+# Experimental: OEP-58 Pulls translations using atlas
+pull_translations:
+	rm -rf src/i18n/messages
+	mkdir src/i18n/messages
+	cd src/i18n/messages \
+	  && atlas pull --filter=$(transifex_langs) \
+	           translations/paragon/src/i18n/messages:paragon \
+	           translations/frontend-app-authn/src/i18n/messages:frontend-app-authn
 
-# This target is used by CI.
+	$(intl_imports) paragon frontend-app-authn
+endif
+
+# This target is used by Travis.
 validate-no-uncommitted-package-lock-changes:
 	# Checking for package-lock.json changes...
 	git diff --exit-code package-lock.json
+
+.PHONY: validate
+validate:
+	make validate-no-uncommitted-package-lock-changes
+	npm run i18n_extract
+	npm run lint -- --max-warnings 0
+	npm run test
+	npm run build
+
+.PHONY: validate.ci
+validate.ci:
+	npm ci
+	make validate

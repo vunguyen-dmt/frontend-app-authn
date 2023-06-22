@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { getConfig, mergeConfig } from '@edx/frontend-platform';
+import { getConfig } from '@edx/frontend-platform';
 import { injectIntl, IntlProvider } from '@edx/frontend-platform/i18n';
 import { mount } from 'enzyme';
 
@@ -9,9 +9,6 @@ import TermsOfService from '../registrationFields/TermsOfService';
 const IntlTermsOfService = injectIntl(TermsOfService);
 
 describe('TermsOfServiceTest', () => {
-  mergeConfig({
-    TOS_LINK: 'http://tos-and-honor-code.com',
-  });
   let value = false;
 
   const changeHandler = (e) => {
@@ -38,7 +35,7 @@ describe('TermsOfServiceTest', () => {
         <IntlTermsOfService onChangeHandler={changeHandler} />
       </IntlProvider>,
     );
-    const expectedMsg = 'I agree to the Your Platform Name Here Terms of Servicein a new tab';
+    const expectedMsg = 'I agree to the Your Platform Name Here\u00a0Terms of Servicein a new tab';
     expect(termsOfService.find('#terms-of-service').find('label').text()).toEqual(expectedMsg);
     expect(value).toEqual(false);
   });

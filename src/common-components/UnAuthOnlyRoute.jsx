@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 
 import { getConfig } from '@edx/frontend-platform';
 import { fetchAuthenticatedUser, getAuthenticatedUser } from '@edx/frontend-platform/auth';
+import PropTypes from 'prop-types';
 import { Route } from 'react-router-dom';
 
-import { DEFAULT_REDIRECT_URL } from '../data/constants';
+import {
+  DEFAULT_REDIRECT_URL,
+} from '../data/constants';
 
 /**
  * This wrapper redirects the requester to our default redirect url if they are
@@ -30,7 +33,11 @@ const UnAuthOnlyRoute = (props) => {
     return <Route {...props} />;
   }
 
-  return <></>;
+  return null;
+};
+
+UnAuthOnlyRoute.propTypes = {
+  path: PropTypes.string.isRequired,
 };
 
 export default UnAuthOnlyRoute;

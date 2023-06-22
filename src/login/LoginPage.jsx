@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { getConfig } from '@edx/frontend-platform';
 import { sendPageEvent, sendTrackEvent } from '@edx/frontend-platform/analytics';
-import { injectIntl, intlShape } from '@edx/frontend-platform/i18n';
+import { injectIntl } from '@edx/frontend-platform/i18n';
 import {
   Form, Hyperlink, Icon, StatefulButton,
 } from '@edx/paragon';
@@ -13,6 +13,14 @@ import { Helmet } from 'react-helmet';
 import Skeleton from 'react-loading-skeleton';
 import { Link } from 'react-router-dom';
 
+import AccountActivationMessage from './AccountActivationMessage';
+import {
+  loginRemovePasswordResetBanner, loginRequest, loginRequestFailure, loginRequestReset, setLoginFormData,
+} from './data/actions';
+import { INVALID_FORM, TPA_AUTHENTICATION_FAILURE } from './data/constants';
+import { loginErrorSelector, loginFormDataSelector, loginRequestSelector } from './data/selectors';
+import LoginFailureMessage from './LoginFailure';
+import messages from './messages';
 import {
   FormGroup, InstitutionLogistration, PasswordField, RedirectLogistration,
   RenderInstitutionButton, SocialAuthProviders, ThirdPartyAuthAlert,
@@ -28,19 +36,10 @@ import {
   getAllPossibleQueryParams,
   getTpaHint,
   getTpaProvider,
-  setSurveyCookie,
   updatePathWithQueryParams,
   windowScrollTo,
 } from '../data/utils';
 import ResetPasswordSuccess from '../reset-password/ResetPasswordSuccess';
-import AccountActivationMessage from './AccountActivationMessage';
-import {
-  loginRemovePasswordResetBanner, loginRequest, loginRequestFailure, loginRequestReset, setLoginFormData,
-} from './data/actions';
-import { INVALID_FORM } from './data/constants';
-import { loginErrorSelector, loginFormDataSelector, loginRequestSelector } from './data/selectors';
-import LoginFailureMessage from './LoginFailure';
-import messages from './messages';
 
 class LoginPage extends React.Component {
   constructor(props, context) {
@@ -122,7 +121,7 @@ class LoginPage extends React.Component {
       email_or_username: emailOrUsername, password, ...this.queryParams,
     };
     this.props.loginRequest(payload);
-  }
+  };
 
   handleOnFocus = (e) => {
     const { errors } = this.state;
@@ -130,14 +129,14 @@ class LoginPage extends React.Component {
     this.props.setLoginFormData({
       errors,
     });
-  }
+  };
 
   handleOnBlur = (e) => {
     const payload = {
       [e.target.name]: e.target.value,
     };
     this.props.setLoginFormData(payload);
-  }
+  };
 
   handleForgotPasswordLinkClickEvent = () => {
     sendTrackEvent('edx.bi.password-reset_form.toggled', { category: 'user-engagement' });
@@ -170,12 +169,12 @@ class LoginPage extends React.Component {
 
     return (
       <>
-        {((!isEnterpriseLoginDisabled && isSocialAuthActive) || (isEnterpriseLoginDisabled && isInstitutionAuthActive))
-           && (
-             <div className="mt-4 mb-3 h4">
-               {intl.formatMessage(messages['login.other.options.heading'])}
-             </div>
-           )}
+        {(isSocialAuthActive || (isEnterpriseLoginDisabled && isInstitutionAuthActive))
+          && (
+            <div className="mt-4 mb-3 h4">
+              {intl.formatMessage(messages['login.other.options.heading'])}
+            </div>
+          )}
 
         {(!isEnterpriseLoginDisabled && isSocialAuthActive) && (
           <Hyperlink className="btn btn-link btn-sm text-body p-0 mb-4" destination={this.getEnterPriseLoginURL()}>
@@ -223,16 +222,12 @@ class LoginPage extends React.Component {
         />
       );
     }
-
-    if (this.props.loginResult.success) {
-      setSurveyCookie('login');
-
-      // Fire optimizely events
-      window.optimizely = window.optimizely || [];
-      window.optimizely.push({
-        type: 'event',
-        eventName: 'authn-login-coversion',
-      });
+    const tpaAuthenticationError = {};
+    if (thirdPartyAuthContext.errorMessage) {
+      tpaAuthenticationError.context = {
+        errorMessage: thirdPartyAuthContext.errorMessage,
+      };
+      tpaAuthenticationError.errorCode = TPA_AUTHENTICATION_FAILURE;
     }
 
     return (
@@ -253,6 +248,7 @@ class LoginPage extends React.Component {
             platformName={thirdPartyAuthContext.platformName}
           />
           {this.props.loginError ? <LoginFailureMessage loginError={this.props.loginError} /> : null}
+          {thirdPartyAuthContext.errorMessage ? <LoginFailureMessage loginError={tpaAuthenticationError} /> : null}
           {submitState === DEFAULT_STATE && this.state.isSubmitted ? windowScrollTo({ left: 0, top: 0, behavior: 'smooth' }) : null}
           {activationMsgType && <AccountActivationMessage messageType={activationMsgType} />}
           {this.props.resetPassword && !this.props.loginError ? <ResetPasswordSuccess /> : null}
@@ -361,6 +357,7 @@ LoginPage.defaultProps = {
   thirdPartyAuthApiStatus: 'pending',
   thirdPartyAuthContext: {
     currentProvider: null,
+    errorMessage: null,
     finishAuthUrl: null,
     providers: [],
     secondaryProviders: [],
@@ -369,8 +366,10 @@ LoginPage.defaultProps = {
 
 LoginPage.propTypes = {
   getThirdPartyAuthContext: PropTypes.func.isRequired,
-  intl: intlShape.isRequired,
-  loginError: PropTypes.objectOf(PropTypes.any),
+  intl: PropTypes.shape({
+    formatMessage: PropTypes.func,
+  }).isRequired,
+  loginError: PropTypes.shape({}),
   loginRequest: PropTypes.func.isRequired,
   loginRequestFailure: PropTypes.func.isRequired,
   loginRequestReset: PropTypes.func.isRequired,
@@ -393,9 +392,10 @@ LoginPage.propTypes = {
   thirdPartyAuthApiStatus: PropTypes.string,
   thirdPartyAuthContext: PropTypes.shape({
     currentProvider: PropTypes.string,
+    errorMessage: PropTypes.string,
     platformName: PropTypes.string,
-    providers: PropTypes.array,
-    secondaryProviders: PropTypes.array,
+    providers: PropTypes.arrayOf(PropTypes.shape({})),
+    secondaryProviders: PropTypes.arrayOf(PropTypes.shape({})),
     finishAuthUrl: PropTypes.string,
   }),
   institutionLogin: PropTypes.bool.isRequired,

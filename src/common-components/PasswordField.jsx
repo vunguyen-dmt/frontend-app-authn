@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { injectIntl, intlShape } from '@edx/frontend-platform/i18n';
+import { useIntl } from '@edx/frontend-platform/i18n';
 import {
   Form, Icon, IconButton, OverlayTrigger, Tooltip, useToggle,
 } from '@edx/paragon';
@@ -9,11 +9,11 @@ import {
 } from '@edx/paragon/icons';
 import PropTypes from 'prop-types';
 
-import { LETTER_REGEX, NUMBER_REGEX } from '../data/constants';
 import messages from './messages';
+import { LETTER_REGEX, NUMBER_REGEX } from '../data/constants';
 
 const PasswordField = (props) => {
-  const { formatMessage } = props.intl;
+  const { formatMessage } = useIntl();
   const [isPasswordHidden, setHiddenTrue, setHiddenFalse] = useToggle(true);
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -59,7 +59,7 @@ const PasswordField = (props) => {
       <OverlayTrigger key="tooltip" placement={placement} overlay={tooltip} show={showTooltip}>
         <Form.Control
           as="input"
-          className="form-field"
+          className="form-group__form-field"
           type={isPasswordHidden ? 'password' : 'text'}
           name={props.name}
           value={props.value}
@@ -100,11 +100,10 @@ PasswordField.propTypes = {
   handleBlur: PropTypes.func,
   handleFocus: PropTypes.func,
   handleChange: PropTypes.func,
-  intl: intlShape.isRequired,
   name: PropTypes.string.isRequired,
   showRequirements: PropTypes.bool,
   value: PropTypes.string.isRequired,
   autoComplete: PropTypes.string,
 };
 
-export default injectIntl(PasswordField);
+export default PasswordField;

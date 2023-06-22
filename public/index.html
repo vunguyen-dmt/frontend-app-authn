@@ -4,67 +4,23 @@
       <title>Authn | <%= process.env.SITE_NAME %></title>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <% if (process.env.OPTIMIZELY_URL) { %>
-        <script
-          src="<%= process.env.OPTIMIZELY_URL %>"
-        ></script>
-      <% } else if (process.env.OPTIMIZELY_PROJECT_ID) { %>
-        <script
-          src="<%= process.env.MARKETING_SITE_BASE_URL %>/optimizelyjs/<%= process.env.OPTIMIZELY_PROJECT_ID %>.js"
-        ></script>
-      <% } %>
-      <% if (process.env.ZENDESK_KEY) { %>
-        <script
-          id="ze-snippet"
-          src="https://static.zdassets.com/ekr/snippet.js?key=<%= process.env.ZENDESK_KEY %>"
-        >
-        </script>
-        <script type="text/javascript">
-          window.zESettings = {
-            cookies: true,
-            webWidget: {
-              contactOptions: {
-                enabled: false,
-              },
-              chat: {
-                suppress: false,
-              },
-              contactForm: {
-                ticketForms: [
-                  {
-                    id: 360003368814,
-                    subject: false,
-                    fields: [
-                      {
-                        id: 'description',
-                        prefill: {
-                          '*': '',
-                        },
-                      },
-                    ],
-                  },
-                ],
-                selectTicketForm: {
-                  '*': 'Please choose your request type:',
-                },
-                attachments: true,
-              },
-              helpCenter: {
-                originalArticleButton: true,
-              },
-              answerBot: {
-                suppress: false,
-                contactOnlyAfterQuery: true,
-                title: { '*': 'edX Support' },
-                avatar: {
-                  url: '<%= process.env.ZENDESK_LOGO_URL %>',
-                  name: { '*': 'edX Support' },
-                },
-              },
-            },
-          };
-        </script>
-      <% } %>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.6/iframeResizer.contentWindow.min.js"
+              integrity="sha512-R7Piufj0/o6jG9ZKrAvS2dblFr2kkuG4XVQwStX+/4P+KwOLUXn2DXy0l1AJDxxqGhkM/FJllZHG2PKOAheYzg=="
+              crossorigin="anonymous"
+              referrerpolicy="no-referrer">
+      </script>
+      <script>
+        setTimeout(function() {
+          const currentPath = window.location.pathname;
+          if (currentPath === '/register-embedded') {
+            const privacyBannerElement = document.querySelector('.cc-grower');
+            if (privacyBannerElement) {
+              // Hide the privacy banner element for embedded authn experience
+              privacyBannerElement.classList.add('d-none');
+            }
+          }
+        }, 1500);
+      </script>
   </head>
   <body>
     <div id="root"></div>

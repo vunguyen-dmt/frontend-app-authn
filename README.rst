@@ -72,8 +72,8 @@ The authentication micro-frontend also requires the following additional variabl
      - The fully-qualified URL to the password reset support page in the target environment.
      - ``https://support.example.com``
 
-   * - ``WELCOME_PAGE_SUPPORT_LINK``
-     - The fully-qualified URL to the welcome support page in the target environment.
+   * - ``AUTHN_PROGRESSIVE_PROFILING_SUPPORT_LINK``
+     - The fully-qualified URL to the progressive profiling support page in the target environment.
      - ``https://support.example.com``
 
    * - ``TOS_AND_HONOR_CODE``
@@ -96,13 +96,22 @@ The authentication micro-frontend also requires the following additional variabl
      - Enables support for configurable registration fields on the MFE. This flag must be enabled to show any required registration field besides the default fields (name, email, username, password).
      - ``true`` | ``''`` (empty strings are falsy)
 
-   * - ``ENABLE_PROGRESSIVE_PROFILING``
+   * - ``ENABLE_PROGRESSIVE_PROFILING_ON_AUTHN``
      - Enables support for progressive profiling. If enabled, users are redirected to a second page where data for optional registration fields can be collected.
      - ``true`` | ``''`` (empty strings are falsy)
 
    * - ``DISABLE_ENTERPRISE_LOGIN``
      - Disables the enterprise login from Authn MFE.
      - ``true`` | ``''`` (empty strings are falsy)
+
+   * - ``MFE_CONFIG_API_URL``
+     - Link of the API to get runtime mfe configuration variables from the site configuration or django settings.
+     - ``/api/v1/mfe_config`` | ``''`` (empty strings are falsy)  
+
+   * - ``APP_ID``
+     - Name of MFE, this will be used by the API to get runtime configurations for the specific micro frontend. For a frontend repo `frontend-app-appName`, use `appName` as APP_ID.
+     - ``authn`` | ``''``
+
 
 edX-specific Environment Variables
 **********************************
@@ -120,6 +129,10 @@ Furthermore, there are several edX-specific environment variables that enable in
    * - ``MARKETING_EMAILS_OPT_IN``
      - Enables support for opting in marketing emails that helps us getting user consent for sending marketing emails.
      - ``true`` | ``''`` (empty strings are falsy)
+
+   * - ``SHOW_CONFIGURABLE_EDX_FIELDS``
+     - For edX, country and honor code fields are required by default. This flag enables edX specific required fields.
+     - ``true`` | ``''`` (empty strings are falsy)    
 
 For more information see the document: `Micro-frontend applications in Open
 edX <https://edx.readthedocs.io/projects/edx-developer-docs/en/latest/developers_guide/micro_frontends_in_open_edx.html#required-environment-variables>`__.

@@ -1,15 +1,15 @@
 import React, { useEffect } from 'react';
 
 import { getConfig } from '@edx/frontend-platform';
-import { injectIntl, intlShape } from '@edx/frontend-platform/i18n';
+import { useIntl } from '@edx/frontend-platform/i18n';
 import PropTypes from 'prop-types';
 
-import FormFieldRenderer from '../field-renderer';
 import { FIELDS } from './data/constants';
 import { validateCountryField } from './data/utils';
 import messages from './messages';
 import { HonorCode, TermsOfService } from './registrationFields';
 import CountryField from './registrationFields/CountryField';
+import { FormFieldRenderer } from '../field-renderer';
 
 /**
  * Fields on registration page that are not the default required fields (name, email, username, password).
@@ -24,16 +24,17 @@ import CountryField from './registrationFields/CountryField';
  *  it for edX.
  * */
 const ConfigurableRegistrationForm = (props) => {
+  const { formatMessage } = useIntl();
   const {
     countryList,
     email,
     fieldDescriptions,
     fieldErrors,
     formFields,
-    intl,
     setFieldErrors,
     setFocusedField,
     setFormFields,
+    registrationEmbedded,
   } = props;
 
   let showTermsOfServiceAndHonorCode = false;
@@ -54,13 +55,13 @@ const ConfigurableRegistrationForm = (props) => {
   });
 
   const handleOnChange = (event, countryValue = null) => {
-    const { name, type } = event.target;
+    const { name } = event.target;
     let value;
     if (countryValue) {
       value = { ...countryValue };
     } else {
       value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-      if (type === 'checkbox') {
+      if (event.target.type === 'checkbox') {
         setFieldErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
       }
     }
@@ -72,7 +73,7 @@ const ConfigurableRegistrationForm = (props) => {
     let error = '';
     if (name === 'country') {
       const countryValidation = validateCountryField(
-        value.trim(), countryList, intl.formatMessage(messages['empty.country.field.error']),
+        value.trim(), countryList, formatMessage(messages['empty.country.field.error']),
       );
       const { countryCode, displayValue } = countryValidation;
       error = countryValidation.error;
@@ -80,7 +81,10 @@ const ConfigurableRegistrationForm = (props) => {
     } else if (!value || !value.trim()) {
       error = fieldDescriptions[name].error_message;
     } else if (name === 'confirm_email' && value !== email) {
-      error = intl.formatMessage(messages['email.do.not.match']);
+      error = formatMessage(messages['email.do.not.match']);
+    }
+    if (registrationEmbedded) {
+      return;
     }
     setFocusedField(null);
     setFieldErrors(prevErrors => ({ ...prevErrors, [name]: error }));
@@ -167,11 +171,11 @@ const ConfigurableRegistrationForm = (props) => {
         <FormFieldRenderer
           fieldData={{
             type: 'checkbox',
-            label: intl.formatMessage(messages['registration.opt.in.label'], { siteName: getConfig().SITE_NAME }),
+            label: formatMessage(messages['registration.opt.in.label'], { siteName: getConfig().SITE_NAME }),
             name: 'marketingEmailsOptIn',
           }}
           value={formFields.marketingEmailsOptIn}
-          className="opt-checkbox"
+          className="form-field--checkbox"
           onChangeHandler={handleOnChange}
           handleBlur={handleOnBlur}
           handleFocus={handleOnFocus}
@@ -199,7 +203,7 @@ const ConfigurableRegistrationForm = (props) => {
 };
 
 ConfigurableRegistrationForm.propTypes = {
-  countryList: PropTypes.arrayOf(PropTypes.object).isRequired,
+  countryList: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   email: PropTypes.string.isRequired,
   fieldDescriptions: PropTypes.shape({}),
   fieldErrors: PropTypes.shape({
@@ -213,14 +217,15 @@ ConfigurableRegistrationForm.propTypes = {
     honor_code: PropTypes.bool,
     marketingEmailsOptIn: PropTypes.bool,
   }).isRequired,
-  intl: intlShape.isRequired,
   setFieldErrors: PropTypes.func.isRequired,
   setFocusedField: PropTypes.func.isRequired,
   setFormFields: PropTypes.func.isRequired,
+  registrationEmbedded: PropTypes.bool,
 };
 
 ConfigurableRegistrationForm.defaultProps = {
   fieldDescriptions: {},
+  registrationEmbedded: false,
 };
 
-export default injectIntl(ConfigurableRegistrationForm);
+export default ConfigurableRegistrationForm;

@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
 
 import { getConfig } from '@edx/frontend-platform';
-import { FormattedMessage, injectIntl, intlShape } from '@edx/frontend-platform/i18n';
+import { FormattedMessage, useIntl } from '@edx/frontend-platform/i18n';
 import { Form, Hyperlink } from '@edx/paragon';
 import PropTypes from 'prop-types';
 
 import messages from '../messages';
 
 const HonorCode = (props) => {
+  const { formatMessage } = useIntl();
   const {
-    intl, errorMessage, onChangeHandler, fieldType, value,
+    errorMessage, onChangeHandler, fieldType, value,
   } = props;
 
   useEffect(() => {
@@ -30,12 +31,12 @@ const HonorCode = (props) => {
             platformName: getConfig().SITE_NAME,
             tosAndHonorCode: (
               <Hyperlink variant="muted" destination={getConfig().TOS_AND_HONOR_CODE || '#'} target="_blank">
-                {intl.formatMessage(messages['terms.of.service.and.honor.code'])}
+                {formatMessage(messages['terms.of.service.and.honor.code'])}
               </Hyperlink>
             ),
             privacyPolicy: (
               <Hyperlink variant="muted" destination={getConfig().PRIVACY_POLICY || '#'} target="_blank">
-                {intl.formatMessage(messages['privacy.policy'])}
+                {formatMessage(messages['privacy.policy'])}
               </Hyperlink>
             ),
           }}
@@ -47,7 +48,7 @@ const HonorCode = (props) => {
   return (
     <div id="honor-code" className="micro text-muted">
       <Form.Checkbox
-        className="opt-checkbox mt-1"
+        className="form-field--checkbox mt-1"
         id="honor-code"
         checked={value}
         name="honor_code"
@@ -56,13 +57,13 @@ const HonorCode = (props) => {
       >
         <FormattedMessage
           id="register.page.honor.code"
-          defaultMessage="I agree to the {platformName} {tosAndHonorCode}"
+          defaultMessage="I agree to the {platformName}&nbsp;{tosAndHonorCode}"
           description="Text that appears on registration form stating honor code"
           values={{
             platformName: getConfig().SITE_NAME,
             tosAndHonorCode: (
               <Hyperlink variant="muted" destination={getConfig().TOS_AND_HONOR_CODE || '#'} target="_blank">
-                {intl.formatMessage(messages['honor.code'])}
+                {formatMessage(messages['honor.code'])}
               </Hyperlink>
             ),
           }}
@@ -85,11 +86,10 @@ HonorCode.defaultProps = {
 };
 
 HonorCode.propTypes = {
-  intl: intlShape.isRequired,
   errorMessage: PropTypes.string,
   onChangeHandler: PropTypes.func,
   fieldType: PropTypes.string,
   value: PropTypes.bool,
 };
 
-export default injectIntl(HonorCode);
+export default HonorCode;
