@@ -23,13 +23,13 @@ const MediumLayout = () => {
             <div>
               <h1
                 className={classNames(
-                  'display-1 text-white mt-5 mb-5 mr-2',
+                  'display-1 text-white mt-5 mb-5 mr-2 text-break',
                   { 'ml-4.5': getConfig().SITE_NAME !== 'edX' },
                 )}
               >
                 <span className="mr-2">{formatMessage(messages['start.learning'])}</span>
-                <span className="text-accent-a d-inline-block">
-                  {formatMessage(messages['with.site.name'], { siteName: getConfig().SITE_NAME })}
+                <span className="text-accent-a d-inline-block welcome-second-line">
+                  {formatMessage(messages['with'])} <span className="site-name-1">HUTECH</span>&nbsp;<span  className="site-name-2">eLearning</span>
                 </span>
               </h1>
             </div>

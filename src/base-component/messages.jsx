@@ -27,6 +27,11 @@ const messages = defineMessages({
     defaultMessage: 'Welcome to {siteName}, {username}!',
     description: 'Welcome message that appears on progressive profile page',
   },
+  'with': {
+    id: 'with',
+    defaultMessage: 'with',
+    description: 'with',
+  },
 });
 
 export default messages;
