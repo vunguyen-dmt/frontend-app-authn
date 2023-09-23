@@ -21,16 +21,13 @@
     fill: #0e3639!important;
 }
 
-.welcome-second-line {
-    color: white!important;
-    .site-name-1 {
-        color: #0063CD!important;
-        white-space: nowrap;
-    }
-    .site-name-2 {
-        color: #F21A1A!important;
-        white-space: nowrap;
-    }
+.site-name-1 {
+    color: #0063CD!important;
+    white-space: nowrap;
+}
+.site-name-2 {
+    color: #F21A1A!important;
+    white-space: nowrap;
 }
 
 [class*="-screen-top-strip"] {

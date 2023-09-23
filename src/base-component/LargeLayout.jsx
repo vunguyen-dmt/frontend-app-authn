@@ -24,10 +24,9 @@ const LargeLayout = () => {
               { 'ml-6': getConfig().SITE_NAME !== 'edX' },
             )}
           >
-            {formatMessage(messages['start.learning'])}
-            <div className="text-accent-a welcome-second-line">
-              {formatMessage(messages['with'])} <span className="site-name-1">HUTECH</span>&nbsp;<span  className="site-name-2">eLearning</span>
-            </div>
+            {formatMessage(messages['start.learning'])}&nbsp;{formatMessage(messages['with'])}
+            <span className="site-name-1 d-inline-block">HUTECH</span>
+            <span className="site-name-2">eLearning</span>
           </h1>
         </div>
       </div>

@@ -27,10 +27,8 @@ const MediumLayout = () => {
                   { 'ml-4.5': getConfig().SITE_NAME !== 'edX' },
                 )}
               >
-                <span className="mr-2">{formatMessage(messages['start.learning'])}</span>
-                <span className="text-accent-a d-inline-block welcome-second-line">
-                  {formatMessage(messages['with'])} <span className="site-name-1">HUTECH</span>&nbsp;<span  className="site-name-2">eLearning</span>
-                </span>
+                <span className="mr-2">{formatMessage(messages['start.learning'])}&nbsp;{formatMessage(messages['with'])}</span>
+                <span className="site-name-1">HUTECH</span>&nbsp;<span className="site-name-2">eLearning</span>
               </h1>
             </div>
           </div>
