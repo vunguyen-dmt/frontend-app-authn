@@ -1,15 +1,11 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import CookiePolicyBanner from '@edx/frontend-component-cookie-policy-banner';
 import { mergeConfig } from '@edx/frontend-platform';
-import * as analytics from '@edx/frontend-platform/analytics';
-import * as auth from '@edx/frontend-platform/auth';
 import { configure, injectIntl, IntlProvider } from '@edx/frontend-platform/i18n';
 import { mount } from 'enzyme';
-import { createMemoryHistory } from 'history';
 import { act } from 'react-dom/test-utils';
-import { MemoryRouter, Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 
 import { INTERNAL_SERVER_ERROR, LOGIN_PAGE } from '../../data/constants';
@@ -17,14 +13,20 @@ import { PASSWORD_RESET } from '../../reset-password/data/constants';
 import { setForgotPasswordFormData } from '../data/actions';
 import ForgotPasswordPage from '../ForgotPasswordPage';
 
-jest.mock('@edx/frontend-platform/analytics');
-jest.mock('@edx/frontend-platform/auth');
+const mockedNavigator = jest.fn();
 
-analytics.sendPageEvent = jest.fn();
+jest.mock('@edx/frontend-platform/analytics', () => ({
+  sendPageEvent: jest.fn(),
+  sendTrackEvent: jest.fn(),
+}));
+jest.mock('@edx/frontend-platform/auth');
+jest.mock('react-router-dom', () => ({
+  ...(jest.requireActual('react-router-dom')),
+  useNavigate: () => mockedNavigator,
+}));
 
 const IntlForgotPasswordPage = injectIntl(ForgotPasswordPage);
 const mockStore = configureStore();
-const history = createMemoryHistory();
 
 const initialState = {
   forgotPassword: {
@@ -51,7 +53,12 @@ describe('ForgotPasswordPage', () => {
 
   beforeEach(() => {
     store = mockStore(initialState);
-    auth.getAuthenticatedUser = jest.fn(() => ({ userId: 3, username: 'test-user' }));
+    jest.mock('@edx/frontend-platform/auth', () => ({
+      getAuthenticatedUser: jest.fn(() => ({
+        userId: 3,
+        username: 'test-user',
+      })),
+    }));
     configure({
       loggingService: { logError: jest.fn() },
       config: {
@@ -191,11 +198,6 @@ describe('ForgotPasswordPage', () => {
     expect(forgotPasswordPage.find('#email-invalid-feedback').exists()).toEqual(false);
   });
 
-  it('check cookie rendered', () => {
-    const forgotPage = mount(reduxWrapper(<IntlForgotPasswordPage {...props} />));
-    expect(forgotPage.find(<CookiePolicyBanner />)).toBeTruthy();
-  });
-
   it('should display success message after email is sent', () => {
     store = mockStore({
       ...initialState,
@@ -227,15 +229,11 @@ describe('ForgotPasswordPage', () => {
   });
 
   it('should redirect onto login page', async () => {
-    const forgotPasswordPage = mount(reduxWrapper(
-      <Router history={history}>
-        <IntlForgotPasswordPage {...props} />
-      </Router>,
-    ));
+    const forgotPasswordPage = mount(reduxWrapper(<IntlForgotPasswordPage {...props} />));
 
     await act(async () => { await forgotPasswordPage.find('nav').find('a').first().simulate('click'); });
 
     forgotPasswordPage.update();
-    expect(history.location.pathname).toEqual(LOGIN_PAGE);
+    expect(mockedNavigator).toHaveBeenCalledWith(LOGIN_PAGE);
   });
 });

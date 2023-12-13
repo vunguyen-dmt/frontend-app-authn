@@ -1,80 +1,50 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
 import { getConfig } from '@edx/frontend-platform';
 import { useIntl } from '@edx/frontend-platform/i18n';
 import {
-  Hyperlink, Image, Spinner, StatefulButton,
+  breakpoints,
+  Container,
+  Hyperlink,
+  Image, Skeleton,
+  StatefulButton,
+  useMediaQuery,
 } from '@edx/paragon';
-import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { useLocation } from 'react-router-dom';
 
-import { DEFAULT_REDIRECT_URL } from '../data/constants';
-import { EDUCATION_LEVEL_MAPPING, RECOMMENDATIONS_COUNT } from './data/constants';
-import getPersonalizedRecommendations from './data/service';
-import { convertCourseRunKeytoCourseKey } from './data/utils';
+import { EDUCATION_LEVEL_MAPPING, PERSONALIZED } from './data/constants';
+import useAlgoliaRecommendations from './data/hooks/useAlgoliaRecommendations';
 import messages from './messages';
-import RecommendationsList from './RecommendationsList';
-import { trackRecommendationsViewed } from './track';
+import RecommendationsLargeLayout from './RecommendationsPageLayouts/LargeLayout';
+import RecommendationsSmallLayout from './RecommendationsPageLayouts/SmallLayout';
+import { LINK_TIMEOUT, trackRecommendationsViewed, trackSkipButtonClicked } from './track';
+import { DEFAULT_REDIRECT_URL } from '../data/constants';
 
-const RecommendationsPage = (props) => {
-  const { location } = props;
-  const registrationResponse = location.state?.registrationResult;
-  const userId = location.state?.userId;
-  const DASHBOARD_URL = getConfig().LMS_BASE_URL.concat(DEFAULT_REDIRECT_URL);
-
+const RecommendationsPage = () => {
   const { formatMessage } = useIntl();
-  const [isLoading, setIsLoading] = useState(true);
-  const [recommendations, setRecommendations] = useState([]);
-  const [algoliaRecommendations, setAlgoliaRecommendations] = useState([]);
+  const isExtraSmall = useMediaQuery({ maxWidth: breakpoints.extraSmall.maxWidth - 1 });
+  const location = useLocation();
+
+  const registrationResponse = location.state?.registrationResult;
+  const DASHBOARD_URL = getConfig().LMS_BASE_URL.concat(DEFAULT_REDIRECT_URL);
   const educationLevel = EDUCATION_LEVEL_MAPPING[location.state?.educationLevel];
+  const userId = location.state?.userId;
+
+  const userCountry = useSelector((state) => state.register.backendCountryCode);
+  const {
+    recommendations: algoliaRecommendations,
+    isLoading,
+  } = useAlgoliaRecommendations(userCountry, educationLevel);
 
   useEffect(() => {
-    if (registrationResponse) {
-      const generalRecommendations = JSON.parse(getConfig().GENERAL_RECOMMENDATIONS);
-      let coursesWithKeys = [];
-      getPersonalizedRecommendations(educationLevel).then((response) => {
-        coursesWithKeys = response.map(course => ({
-          ...course,
-          courseKey: convertCourseRunKeytoCourseKey(course.activeRunKey),
-        }));
-        setAlgoliaRecommendations(coursesWithKeys.slice(0, RECOMMENDATIONS_COUNT));
-
-        if (coursesWithKeys.length >= RECOMMENDATIONS_COUNT) {
-          setRecommendations(coursesWithKeys.slice(0, RECOMMENDATIONS_COUNT));
-        } else {
-          const courseRecommendations = coursesWithKeys.concat(generalRecommendations);
-          // Remove duplicate recommendations
-          const uniqueRecommendations = courseRecommendations.filter(
-            (recommendation, index, self) => index === self.findIndex((existingRecommendation) => (
-              existingRecommendation.courseKey === recommendation.courseKey
-            )),
-          );
-          setRecommendations(uniqueRecommendations.slice(0, RECOMMENDATIONS_COUNT));
-        }
-
-        setIsLoading(false);
-      })
-        .catch(() => {
-          setRecommendations(generalRecommendations.slice(0, RECOMMENDATIONS_COUNT));
-          setIsLoading(false);
-        });
-    }
-  }, [registrationResponse, DASHBOARD_URL, educationLevel, userId]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      // We only want to track the recommendations returned by Algolia
-      const courseKeys = algoliaRecommendations.map(course => course.courseKey);
-      trackRecommendationsViewed(courseKeys, false, userId);
+    if (!isLoading && algoliaRecommendations.length > 0) {
+      trackRecommendationsViewed(algoliaRecommendations, PERSONALIZED, userId);
     }
   }, [isLoading, algoliaRecommendations, userId]);
 
-  if (!registrationResponse) {
-    global.location.assign(DASHBOARD_URL);
-    return null;
-  }
-
-  const handleRedirection = () => {
+  const handleSkipRecommendationPage = () => {
     window.history.replaceState(location.state, null, '');
     if (registrationResponse) {
       window.location.href = registrationResponse.redirectUrl;
@@ -83,14 +53,20 @@ const RecommendationsPage = (props) => {
     }
   };
 
-  if (!isLoading && recommendations.length < RECOMMENDATIONS_COUNT) {
-    handleRedirection();
-  }
-
   const handleSkip = (e) => {
     e.preventDefault();
-    handleRedirection();
+    trackSkipButtonClicked(userId);
+    setTimeout(() => { handleSkipRecommendationPage(); }, LINK_TIMEOUT);
   };
+
+  if (!registrationResponse) {
+    window.location.href = DASHBOARD_URL;
+    return null;
+  }
+
+  if (!isLoading && !algoliaRecommendations.length) {
+    handleSkipRecommendationPage();
+  }
 
   return (
     <>
@@ -99,56 +75,55 @@ const RecommendationsPage = (props) => {
           { siteName: getConfig().SITE_NAME })}
         </title>
       </Helmet>
-      <div className="d-flex flex-column vh-100 bg-light-200">
+      <div className="d-flex flex-column bg-light-200 min-vh-100">
         <div className="mb-2">
           <div className="col-md-12 small-screen-top-stripe medium-screen-top-stripe extra-large-screen-top-stripe" />
           <Hyperlink destination={getConfig().MARKETING_SITE_BASE_URL}>
             <Image className="logo" alt={getConfig().SITE_NAME} src={getConfig().LOGO_URL} />
           </Hyperlink>
         </div>
-        {(!isLoading && recommendations.length === RECOMMENDATIONS_COUNT) ? (
-          <div className="d-flex flex-column align-items-center justify-content-center flex-grow-1 p-1">
-            <RecommendationsList
-              title={formatMessage(messages['recommendation.page.heading'])}
-              recommendations={recommendations}
-              userId={userId}
-            />
-            <div className="text-center">
-              <StatefulButton
-                className="font-weight-500"
-                type="submit"
-                variant="brand"
-                labels={{
-                  default: formatMessage(messages['recommendation.skip.button']),
-                }}
-                onClick={handleSkip}
+        <div className="d-flex flex-column align-items-center justify-content-center flex-grow-1">
+          <Container
+            id="course-recommendations"
+            size="lg"
+            className="pr-4 pl-4 mt-4.5 mb-4.5 mb-md-5"
+          >
+            {isExtraSmall ? (
+              <RecommendationsSmallLayout
+                userId={userId}
+                isLoading={isLoading}
+                personalizedRecommendations={algoliaRecommendations}
               />
+            ) : (
+              <RecommendationsLargeLayout
+                userId={userId}
+                isLoading={isLoading}
+                personalizedRecommendations={algoliaRecommendations}
+              />
+            )}
+            <div className="mt-3 mt-sm-4.5 text-center">
+              {isLoading && (
+                <Skeleton height={40} width={140} />
+              )}
+              {!isLoading && algoliaRecommendations.length && (
+                <StatefulButton
+                  className="font-weight-500"
+                  type="submit"
+                  variant="outline-brand"
+                  labels={{
+                    default: formatMessage(messages['recommendation.skip.button']),
+                  }}
+                  onClick={handleSkip}
+                />
+              )}
             </div>
-          </div>
-        )
-          : (
-            <Spinner animation="border" variant="primary" className="centered-align-spinner" />
-          )}
+          </Container>
+        </div>
       </div>
     </>
   );
 };
 
-RecommendationsPage.propTypes = {
-  location: PropTypes.shape({
-    state: PropTypes.shape({
-      registrationResult: PropTypes.shape({
-        redirectUrl: PropTypes.string,
-      }),
-      userId: PropTypes.number,
-      educationLevel: PropTypes.string,
-    }),
-  }),
-
-};
-
-RecommendationsPage.defaultProps = {
-  location: { state: {} },
-};
+RecommendationsPage.propTypes = {};
 
 export default RecommendationsPage;

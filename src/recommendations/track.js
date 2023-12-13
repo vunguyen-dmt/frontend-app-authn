@@ -3,51 +3,54 @@ import { sendTrackEvent } from '@edx/frontend-platform/analytics';
 export const LINK_TIMEOUT = 300;
 
 export const eventNames = {
-  recommendedCourseClicked: 'edx.bi.user.recommended.course.click',
-  recommendationsGroup: 'edx.bi.user.recommendations.group',
+  recommendedProductClicked: 'edx.bi.user.recommended.product.clicked',
   recommendationsViewed: 'edx.bi.user.recommendations.viewed',
+  skipButtonClicked: 'edx.bi.user.recommendations.skip.btn.clicked',
 };
 
-export const createLinkTracker = (tracker, href, openInNewTab = false) => (e) => {
-  e.preventDefault();
-  tracker();
-  if (openInNewTab) {
-    return setTimeout(() => { global.open(href, '_blank'); }, LINK_TIMEOUT);
+const generateProductKey = (product) => (
+  product.cardType === 'program' ? `${product.title} [${product.uuid}]` : product.activeRunKey
+);
+
+export const getProductMapping = (recommendedProducts) => recommendedProducts.map((product) => ({
+  product_key: generateProductKey(product),
+  product_line: product.cardType,
+  product_source: product.productSource.name,
+}));
+
+export const trackRecommendationClick = (product, position, userId) => {
+  sendTrackEvent(eventNames.recommendedProductClicked, {
+    page: 'authn_recommendations',
+    position,
+    recommendation_type: product.recommendationType,
+    product_key: generateProductKey(product),
+    product_line: product.cardType,
+    product_source: product.productSource.name,
+    user_id: userId,
+  });
+
+  const productUrl = product.url || product?.activeCourseRun?.marketingUrl;
+  return setTimeout(() => { global.open(productUrl, '_blank'); }, LINK_TIMEOUT);
+};
+
+export const trackRecommendationsViewed = (recommendedProducts, type, userId) => {
+  const viewedProductsList = getProductMapping(recommendedProducts);
+
+  if (viewedProductsList && viewedProductsList.length) {
+    sendTrackEvent(
+      eventNames.recommendationsViewed, {
+        page: 'authn_recommendations',
+        recommendation_type: type,
+        products: viewedProductsList,
+        user_id: userId,
+      },
+    );
   }
-  return setTimeout(() => { global.location.href = href; }, LINK_TIMEOUT);
 };
 
-export const trackRecommendationsClicked = (courseKey, isControl, position, userId, href, recommendationType) => {
-  createLinkTracker(
-    sendTrackEvent(eventNames.recommendedCourseClicked, {
-      page: 'authn_recommendations',
-      position,
-      recommendation_type: recommendationType,
-      course_key: courseKey,
-      is_control: isControl,
-      user_id: userId,
-    }),
-    href,
-    true,
-  );
-};
-
-export const trackRecommendationsViewed = (recommendedCourseKeys, isControl, userId) => {
+export const trackSkipButtonClicked = (userId) => {
   sendTrackEvent(
-    eventNames.recommendationsViewed, {
-      page: 'authn_recommendations',
-      course_key_array: recommendedCourseKeys,
-      amplitude_recommendations: false,
-      is_control: isControl,
-      user_id: userId,
-    },
-  );
-};
-
-export const trackRecommendationsGroup = (variation, userId) => {
-  sendTrackEvent(
-    eventNames.recommendationsGroup, {
-      variation,
+    eventNames.skipButtonClicked, {
       page: 'authn_recommendations',
       user_id: userId,
     },
@@ -55,7 +58,7 @@ export const trackRecommendationsGroup = (variation, userId) => {
 };
 
 export default {
-  trackRecommendationsClicked,
-  trackRecommendationsGroup,
+  trackRecommendationClick,
   trackRecommendationsViewed,
+  trackSkipButtonClicked,
 };

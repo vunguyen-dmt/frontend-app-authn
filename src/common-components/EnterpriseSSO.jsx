@@ -4,13 +4,14 @@ import { getConfig } from '@edx/frontend-platform';
 import { useIntl } from '@edx/frontend-platform/i18n';
 import {
   Button, Form,
+  Icon,
 } from '@edx/paragon';
-import { faSignInAlt } from '@fortawesome/free-solid-svg-icons';
+import { Login } from '@edx/paragon/icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import PropTypes from 'prop-types';
 
-import { LOGIN_PAGE, SUPPORTED_ICON_CLASSES } from '../data/constants';
 import messages from './messages';
+import { LOGIN_PAGE, SUPPORTED_ICON_CLASSES } from '../data/constants';
 
 /**
  * This component renders the Single sign-on (SSO) button only for the tpa provider passed
@@ -47,16 +48,18 @@ const EnterpriseSSO = (props) => {
               >
                 {tpaProvider.iconImage ? (
                   <div aria-hidden="true">
-                    <img className="icon-image" src={tpaProvider.iconImage} alt={`icon ${tpaProvider.name}`} />
+                    <img className="btn-tpa__image-icon" src={tpaProvider.iconImage} alt={`icon ${tpaProvider.name}`} />
                     <span className="pl-2" aria-hidden="true">{ tpaProvider.name }</span>
                   </div>
                 )
                   : (
                     <>
-                      <div className="font-container" aria-hidden="true">
-                        <FontAwesomeIcon
-                          icon={SUPPORTED_ICON_CLASSES.includes(tpaProvider.iconClass) ? ['fab', tpaProvider.iconClass] : faSignInAlt}
-                        />
+                      <div className="btn-tpa__font-container" aria-hidden="true">
+                        {SUPPORTED_ICON_CLASSES.includes(tpaProvider.iconClass) ? (
+                          <FontAwesomeIcon icon={['fab', tpaProvider.iconClass]} />)
+                          : (
+                            <Icon className="h-75" src={Login} />
+                          )}
                       </div>
                       <span className="pl-2" aria-hidden="true">{ tpaProvider.name }</span>
                     </>

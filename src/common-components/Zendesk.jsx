@@ -5,6 +5,7 @@ import { useIntl } from '@edx/frontend-platform/i18n';
 import Zendesk from 'react-zendesk';
 
 import messages from './messages';
+import { REGISTER_EMBEDDED_PAGE } from '../data/constants';
 
 const ZendeskHelp = () => {
   const { formatMessage } = useIntl();
@@ -16,6 +17,9 @@ const ZendeskHelp = () => {
       },
       chat: {
         suppress: false,
+        departments: {
+          enabled: ['account settings', 'billing and payments', 'certificates', 'deadlines', 'errors and technical issues', 'other', 'proctoring'],
+        },
       },
       contactForm: {
         ticketForms: [
@@ -44,6 +48,10 @@ const ZendeskHelp = () => {
       },
     },
   };
+
+  if (window.location.pathname === REGISTER_EMBEDDED_PAGE) {
+    return null;
+  }
 
   return (
     <Zendesk defer zendeskKey={getConfig().ZENDESK_KEY} {...setting} />

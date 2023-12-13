@@ -12,19 +12,21 @@ import {
 } from '@edx/paragon';
 import { ChevronLeft } from '@edx/paragon/icons';
 import PropTypes from 'prop-types';
-import { Redirect } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
-import { BaseComponent } from '../base-component';
+import BaseContainer from '../base-container';
+import { clearThirdPartyAuthContextErrorMessage } from '../common-components/data/actions';
+import {
+  tpaProvidersSelector,
+} from '../common-components/data/selectors';
+import messages from '../common-components/messages';
 import { LOGIN_PAGE, REGISTER_PAGE } from '../data/constants';
-import { getTpaHint, getTpaProvider, updatePathWithQueryParams } from '../data/utils';
+import {
+  getTpaHint, getTpaProvider, updatePathWithQueryParams,
+} from '../data/utils';
 import { LoginPage } from '../login';
 import { RegistrationPage } from '../register';
 import { backupRegistrationForm } from '../register/data/actions';
-import { clearThirdPartyAuthContextErrorMessage } from './data/actions';
-import {
-  tpaProvidersSelector,
-} from './data/selectors';
-import messages from './messages';
 
 const Logistration = (props) => {
   const { selectedPage, tpaProviders } = props;
@@ -35,6 +37,7 @@ const Logistration = (props) => {
   const { formatMessage } = useIntl();
   const [institutionLogin, setInstitutionLogin] = useState(false);
   const [key, setKey] = useState('');
+  const navigate = useNavigate();
   const disablePublicAccountCreation = getConfig().ALLOW_PUBLIC_ACCOUNT_CREATION === false;
 
   useEffect(() => {
@@ -43,6 +46,12 @@ const Logistration = (props) => {
       authService.getCsrfTokenService().getCsrfToken(getConfig().LMS_BASE_URL);
     }
   });
+
+  useEffect(() => {
+    if (disablePublicAccountCreation) {
+      navigate(updatePathWithQueryParams(LOGIN_PAGE));
+    }
+  }, [navigate, disablePublicAccountCreation]);
 
   const handleInstitutionLogin = (e) => {
     sendTrackEvent('edx.bi.institution_login_form.toggled', { category: 'user-engagement' });
@@ -81,12 +90,11 @@ const Logistration = (props) => {
   };
 
   return (
-    <BaseComponent>
+    <BaseContainer>
       <div>
         {disablePublicAccountCreation
           ? (
             <>
-              <Redirect to={updatePathWithQueryParams(LOGIN_PAGE)} />
               {institutionLogin && (
                 <Tabs defaultActiveKey="" id="controlled-tab" onSelect={handleInstitutionLogin}>
                   <Tab title={tabTitle} eventKey={LOGIN_PAGE} />
@@ -115,7 +123,7 @@ const Logistration = (props) => {
                   </Tabs>
                 ))}
               { key && (
-                <Redirect to={updatePathWithQueryParams(key)} />
+                <Navigate to={updatePathWithQueryParams(key)} replace />
               )}
               <div id="main-content" className="main-content">
                 {selectedPage === LOGIN_PAGE
@@ -130,7 +138,7 @@ const Logistration = (props) => {
             </div>
           )}
       </div>
-    </BaseComponent>
+    </BaseContainer>
   );
 };
 

@@ -18,8 +18,8 @@ export async function getThirdPartyAuthContext(urlParams) {
       throw (e);
     });
   return {
-    fieldDescriptions: data.registrationFields || data.registration_fields,
-    optionalFields: data.optionalFields || data.optional_fields,
-    thirdPartyAuthContext: data.contextData || data.context_data,
+    fieldDescriptions: data.registrationFields || {},
+    optionalFields: data.optionalFields || {},
+    thirdPartyAuthContext: data.contextData || {},
   };
 }

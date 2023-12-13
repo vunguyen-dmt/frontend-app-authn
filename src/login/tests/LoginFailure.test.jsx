@@ -1,6 +1,5 @@
 import React from 'react';
 
-import * as auth from '@edx/frontend-platform/auth';
 import { injectIntl, IntlProvider } from '@edx/frontend-platform/i18n';
 import { mount } from 'enzyme';
 import { MemoryRouter } from 'react-router-dom';
@@ -20,8 +19,9 @@ import {
 } from '../data/constants';
 import LoginFailureMessage from '../LoginFailure';
 
-jest.mock('@edx/frontend-platform/auth');
-auth.getAuthService = jest.fn();
+jest.mock('@edx/frontend-platform/auth', () => ({
+  getAuthService: jest.fn(),
+}));
 
 const IntlLoginFailureMessage = injectIntl(LoginFailureMessage);
 
@@ -225,7 +225,7 @@ describe('LoginFailureMessage', () => {
       loginError: {
         errorCode: TPA_AUTHENTICATION_FAILURE,
         context: {
-          errorMessage: 'An error occured',
+          errorMessage: 'An error occurred',
         },
       },
     };
@@ -239,7 +239,7 @@ describe('LoginFailureMessage', () => {
     const expectedMessageSubstring = 'We are sorry, you are not authorized to access';
 
     expect(loginFailureMessage.find('#login-failure-alert').first().text()).toContain(expectedMessageSubstring);
-    expect(loginFailureMessage.find('#login-failure-alert').first().text()).toContain('An error occured');
+    expect(loginFailureMessage.find('#login-failure-alert').first().text()).toContain('An error occurred');
   });
 
   it('should show modal that nudges users to change password', () => {

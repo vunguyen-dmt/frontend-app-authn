@@ -6,9 +6,7 @@ import { identifyAuthenticatedUser, sendPageEvent, sendTrackEvent } from '@edx/f
 import {
   AxiosJwtAuthService,
   configure as configureAuth,
-  ensureAuthenticatedUser,
   getAuthenticatedUser,
-  hydrateAuthenticatedUser,
 } from '@edx/frontend-platform/auth';
 import { useIntl } from '@edx/frontend-platform/i18n';
 import { getLoggingService } from '@edx/frontend-platform/logging';
@@ -21,97 +19,128 @@ import {
 import { Error } from '@edx/paragon/icons';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { useLocation } from 'react-router-dom';
 
-import { BaseComponent } from '../base-component';
-import { RedirectLogistration } from '../common-components';
-import {
-  DEFAULT_REDIRECT_URL, DEFAULT_STATE, FAILURE_STATE,
-} from '../data/constants';
-import { getAllPossibleQueryParams } from '../data/utils';
-import { FormFieldRenderer } from '../field-renderer';
-import {
-  activateRecommendationsExperiment, RECOMMENDATIONS_EXP_VARIATION, trackRecommendationViewedOptimizely,
-} from '../recommendations/optimizelyExperiment';
-import { trackRecommendationsGroup, trackRecommendationsViewed } from '../recommendations/track';
 import { saveUserProfile } from './data/actions';
-import { welcomePageSelector } from './data/selectors';
+import { welcomePageContextSelector } from './data/selectors';
 import messages from './messages';
 import ProgressiveProfilingPageModal from './ProgressiveProfilingPageModal';
+import BaseContainer from '../base-container';
+import { RedirectLogistration } from '../common-components';
+import { getThirdPartyAuthContext } from '../common-components/data/actions';
+import {
+  COMPLETE_STATE,
+  DEFAULT_REDIRECT_URL,
+  DEFAULT_STATE,
+  FAILURE_STATE,
+  PENDING_STATE,
+} from '../data/constants';
+import isOneTrustFunctionalCookieEnabled from '../data/oneTrust';
+import { getAllPossibleQueryParams, isHostAvailableInQueryParams } from '../data/utils';
+import { FormFieldRenderer } from '../field-renderer';
 
 const ProgressiveProfiling = (props) => {
-  const {
-    formRenderState, submitState, showError, location,
-  } = props;
-  const enablePersonalizedRecommendations = getConfig().ENABLE_PERSONALIZED_RECOMMENDATIONS;
-  const registrationResponse = location.state?.registrationResult;
-
   const { formatMessage } = useIntl();
-  const [ready, setReady] = useState(false);
+  const {
+    getFieldDataFromBackend,
+    submitState,
+    showError,
+    welcomePageContext,
+    welcomePageContextApiStatus,
+  } = props;
+  const location = useLocation();
+  const registrationEmbedded = isHostAvailableInQueryParams();
+
+  const queryParams = getAllPossibleQueryParams();
+  const authenticatedUser = getAuthenticatedUser() || location.state?.authenticatedUser;
+  const functionalCookiesConsent = isOneTrustFunctionalCookieEnabled();
+  const enablePostRegistrationRecommendations = (
+    getConfig().ENABLE_POST_REGISTRATION_RECOMMENDATIONS && functionalCookiesConsent
+  );
+
   const [registrationResult, setRegistrationResult] = useState({ redirectUrl: '' });
+  const [formFieldData, setFormFieldData] = useState({ fields: {}, extendedProfile: [] });
   const [values, setValues] = useState({});
-  const [openDialog, setOpenDialog] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [showRecommendationsPage, setShowRecommendationsPage] = useState(false);
-  const authenticatedUser = getAuthenticatedUser();
-  const DASHBOARD_URL = getConfig().LMS_BASE_URL.concat(DEFAULT_REDIRECT_URL);
 
   useEffect(() => {
-    configureAuth(AxiosJwtAuthService, { loggingService: getLoggingService(), config: getConfig() });
-    ensureAuthenticatedUser(DASHBOARD_URL)
-      .then(() => {
-        hydrateAuthenticatedUser().then(() => {
-          setReady(true);
-        });
-      })
-      .catch(() => {});
+    if (registrationEmbedded) {
+      getFieldDataFromBackend({ is_welcome_page: true, next: queryParams?.next });
+    } else {
+      configureAuth(AxiosJwtAuthService, { loggingService: getLoggingService(), config: getConfig() });
+    }
+  }, [registrationEmbedded, getFieldDataFromBackend, queryParams?.next]);
 
+  useEffect(() => {
+    const registrationResponse = location.state?.registrationResult;
     if (registrationResponse) {
       setRegistrationResult(registrationResponse);
+      setFormFieldData({
+        fields: location.state?.optionalFields.fields,
+        extendedProfile: location.state?.optionalFields.extended_profile,
+      });
     }
-  }, [DASHBOARD_URL, registrationResponse]);
+  }, [location.state]);
 
   useEffect(() => {
-    if (ready && authenticatedUser?.userId) {
+    if (registrationEmbedded && Object.keys(welcomePageContext).includes('fields')) {
+      setFormFieldData({
+        fields: welcomePageContext.fields,
+        extendedProfile: welcomePageContext.extended_profile,
+      });
+      const nextUrl = welcomePageContext.nextUrl ? welcomePageContext.nextUrl : getConfig().SEARCH_CATALOG_URL;
+      setRegistrationResult({ redirectUrl: nextUrl });
+    }
+  }, [registrationEmbedded, welcomePageContext]);
+
+  useEffect(() => {
+    if (authenticatedUser?.userId) {
       identifyAuthenticatedUser(authenticatedUser.userId);
       sendPageEvent('login_and_registration', 'welcome');
     }
-  }, [authenticatedUser, ready]);
+  }, [authenticatedUser]);
 
   useEffect(() => {
-    if (registrationResponse && authenticatedUser?.userId) {
-      const queryParams = getAllPossibleQueryParams(registrationResponse.redirectUrl);
-      if (enablePersonalizedRecommendations && !('enrollment_action' in queryParams)) {
-        const userIdStr = authenticatedUser.userId.toString();
-        const variation = activateRecommendationsExperiment(userIdStr);
-        const showRecommendations = variation === RECOMMENDATIONS_EXP_VARIATION;
+    if (!enablePostRegistrationRecommendations) {
+      sendTrackEvent(
+        'edx.bi.user.recommendations.not.enabled',
+        { functionalCookiesConsent, page: 'authn_recommendations' },
+      );
+      return;
+    }
 
-        trackRecommendationsGroup(variation, authenticatedUser.userId);
-        trackRecommendationViewedOptimizely(userIdStr);
-        setShowRecommendationsPage(showRecommendations);
-        if (!showRecommendations) {
-          trackRecommendationsViewed([], true, authenticatedUser.userId);
-        }
+    if (registrationResult.redirectUrl && authenticatedUser?.userId) {
+      const redirectQueryParams = getAllPossibleQueryParams(registrationResult.redirectUrl);
+      if (!('enrollment_action' in redirectQueryParams || queryParams?.next)) {
+        setShowRecommendationsPage(true);
       }
     }
-  }, [authenticatedUser, enablePersonalizedRecommendations, registrationResponse]);
+  }, [
+    authenticatedUser,
+    enablePostRegistrationRecommendations,
+    functionalCookiesConsent,
+    registrationResult.redirectUrl,
+    queryParams?.next,
+  ]);
 
-  if (!location.state || !location.state.registrationResult || formRenderState === FAILURE_STATE) {
+  if (
+    !authenticatedUser
+    || !(location.state?.registrationResult || registrationEmbedded)
+    || welcomePageContextApiStatus === FAILURE_STATE
+    || (welcomePageContextApiStatus === COMPLETE_STATE && !Object.keys(welcomePageContext).includes('fields'))
+  ) {
+    const DASHBOARD_URL = getConfig().LMS_BASE_URL.concat(DEFAULT_REDIRECT_URL);
     global.location.assign(DASHBOARD_URL);
     return null;
   }
-
-  if (!ready) {
-    return null;
-  }
-
-  const optionalFields = location.state.optionalFields.fields;
-  const extendedProfile = location.state.optionalFields.extended_profile;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     window.history.replaceState(location.state, null, '');
     const payload = { ...values, extendedProfile: [] };
-    if (Object.keys(extendedProfile).length > 0) {
-      extendedProfile.forEach(fieldName => {
+    if (Object.keys(formFieldData.extendedProfile).length > 0) {
+      formFieldData.extendedProfile.forEach(fieldName => {
         if (values[fieldName]) {
           payload.extendedProfile.push({ fieldName, fieldValue: values[fieldName] });
         }
@@ -126,15 +155,21 @@ const ProgressiveProfiling = (props) => {
         isGenderSelected: !!values.gender,
         isYearOfBirthSelected: !!values.year_of_birth,
         isLevelOfEducationSelected: !!values.level_of_education,
+        host: queryParams?.host || '',
       },
     );
   };
 
   const handleSkip = (e) => {
     e.preventDefault();
-    window.history.replaceState(props.location.state, null, '');
-    setOpenDialog(true);
-    sendTrackEvent('edx.bi.welcome.page.skip.link.clicked');
+    window.history.replaceState(location.state, null, '');
+    setShowModal(true);
+    sendTrackEvent(
+      'edx.bi.welcome.page.skip.link.clicked',
+      {
+        host: queryParams?.host || '',
+      },
+    );
   };
 
   const onChangeHandler = (e) => {
@@ -145,8 +180,8 @@ const ProgressiveProfiling = (props) => {
     }
   };
 
-  const formFields = Object.keys(optionalFields).map((fieldName) => {
-    const fieldData = optionalFields[fieldName];
+  const formFields = Object.keys(formFieldData.fields).map((fieldName) => {
+    const fieldData = formFieldData.fields[fieldName];
     return (
       <span key={fieldData.name}>
         <FormFieldRenderer
@@ -159,14 +194,20 @@ const ProgressiveProfiling = (props) => {
   });
 
   return (
-    <BaseComponent showWelcomeBanner>
+    <BaseContainer showWelcomeBanner username={authenticatedUser?.username}>
       <Helmet>
         <title>{formatMessage(messages['progressive.profiling.page.title'],
           { siteName: getConfig().SITE_NAME })}
         </title>
       </Helmet>
-      <ProgressiveProfilingPageModal isOpen={openDialog} redirectUrl={registrationResult.redirectUrl} />
-      {props.shouldRedirect ? (
+      <ProgressiveProfilingPageModal isOpen={showModal} redirectUrl={registrationResult.redirectUrl} />
+      {(props.shouldRedirect && welcomePageContext.nextUrl) && (
+        <RedirectLogistration
+          success
+          redirectUrl={registrationResult.redirectUrl}
+        />
+      )}
+      {props.shouldRedirect && (
         <RedirectLogistration
           success
           redirectUrl={registrationResult.redirectUrl}
@@ -174,10 +215,10 @@ const ProgressiveProfiling = (props) => {
           educationLevel={values?.level_of_education}
           userId={authenticatedUser?.userId}
         />
-      ) : null}
+      )}
       <div className="mw-xs m-4 pp-page-content">
         <div>
-          <h2 className="pp-page-heading text-primary">{formatMessage(messages['progressive.profiling.page.heading'])}</h2>
+          <h2 className="pp-page__heading text-primary">{formatMessage(messages['progressive.profiling.page.heading'])}</h2>
         </div>
         <hr className="border-light-700 mb-4" />
         {showError ? (
@@ -189,7 +230,7 @@ const ProgressiveProfiling = (props) => {
         <Form>
           {formFields}
           {(getConfig().AUTHN_PROGRESSIVE_PROFILING_SUPPORT_LINK) && (
-            <span className="progressive-profiling-support">
+            <span className="pp-page__support-link">
               <Hyperlink
                 isInline
                 variant="muted"
@@ -206,7 +247,7 @@ const ProgressiveProfiling = (props) => {
             <StatefulButton
               type="submit"
               variant="brand"
-              className="login-button-width"
+              className="pp-page__button-width"
               state={submitState}
               labels={{
                 default: showRecommendationsPage ? formatMessage(messages['optional.fields.next.button']) : formatMessage(messages['optional.fields.submit.button']),
@@ -228,46 +269,54 @@ const ProgressiveProfiling = (props) => {
           </div>
         </Form>
       </div>
-    </BaseComponent>
+    </BaseContainer>
   );
 };
 
 ProgressiveProfiling.propTypes = {
-  formRenderState: PropTypes.string.isRequired,
-  location: PropTypes.shape({
-    state: PropTypes.shape({
-      registrationResult: PropTypes.shape({
-        redirectUrl: PropTypes.string,
-      }),
-      optionalFields: PropTypes.shape({
-        extended_profile: PropTypes.arrayOf(PropTypes.string),
-        fields: PropTypes.shape({}),
-      }),
-    }),
+  authenticatedUser: PropTypes.shape({
+    username: PropTypes.string,
+    userId: PropTypes.number,
   }),
-  saveUserProfile: PropTypes.func.isRequired,
   showError: PropTypes.bool,
   shouldRedirect: PropTypes.bool,
   submitState: PropTypes.string,
+  welcomePageContext: PropTypes.shape({
+    extended_profile: PropTypes.arrayOf(PropTypes.string),
+    fields: PropTypes.shape({}),
+    nextUrl: PropTypes.string,
+  }),
+  welcomePageContextApiStatus: PropTypes.string,
+  // Actions
+  getFieldDataFromBackend: PropTypes.func.isRequired,
+  saveUserProfile: PropTypes.func.isRequired,
 };
 
 ProgressiveProfiling.defaultProps = {
-  location: { state: {} },
+  authenticatedUser: {},
   shouldRedirect: false,
   showError: false,
   submitState: DEFAULT_STATE,
+  welcomePageContext: {},
+  welcomePageContextApiStatus: PENDING_STATE,
 };
 
-const mapStateToProps = state => ({
-  formRenderState: welcomePageSelector(state).formRenderState,
-  shouldRedirect: welcomePageSelector(state).success,
-  submitState: welcomePageSelector(state).submitState,
-  showError: welcomePageSelector(state).showError,
-});
+const mapStateToProps = state => {
+  const welcomePageStore = state.welcomePage;
+
+  return {
+    shouldRedirect: welcomePageStore.success,
+    showError: welcomePageStore.showError,
+    submitState: welcomePageStore.submitState,
+    welcomePageContext: welcomePageContextSelector(state),
+    welcomePageContextApiStatus: state.commonComponents.thirdPartyAuthApiStatus,
+  };
+};
 
 export default connect(
   mapStateToProps,
   {
     saveUserProfile,
+    getFieldDataFromBackend: getThirdPartyAuthContext,
   },
 )(ProgressiveProfiling);

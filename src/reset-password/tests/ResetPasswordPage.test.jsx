@@ -1,25 +1,31 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import CookiePolicyBanner from '@edx/frontend-component-cookie-policy-banner';
-import * as auth from '@edx/frontend-platform/auth';
 import { configure, injectIntl, IntlProvider } from '@edx/frontend-platform/i18n';
 import { mount } from 'enzyme';
-import { createMemoryHistory } from 'history';
 import { act } from 'react-dom/test-utils';
-import { MemoryRouter, Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import configureStore from 'redux-mock-store';
 
-import { LOGIN_PAGE } from '../../data/constants';
-import { resetPassword } from '../data/actions';
-import { PASSWORD_RESET, TOKEN_STATE } from '../data/constants';
+import { LOGIN_PAGE, RESET_PAGE } from '../../data/constants';
+import { resetPassword, validateToken } from '../data/actions';
+import {
+  PASSWORD_RESET, PASSWORD_RESET_ERROR, SUCCESS, TOKEN_STATE,
+} from '../data/constants';
 import ResetPasswordPage from '../ResetPasswordPage';
 
+const mockedNavigator = jest.fn();
+const token = '1c-bmjdkc-5e60e084cf8113048ca7';
+
 jest.mock('@edx/frontend-platform/auth');
+jest.mock('react-router-dom', () => ({
+  ...(jest.requireActual('react-router-dom')),
+  useNavigate: () => mockedNavigator,
+  useParams: jest.fn().mockReturnValue({ token }),
+}));
 
 const IntlResetPasswordPage = injectIntl(ResetPasswordPage);
 const mockStore = configureStore();
-const history = createMemoryHistory();
 
 describe('ResetPasswordPage', () => {
   let props = {};
@@ -33,8 +39,15 @@ describe('ResetPasswordPage', () => {
     </IntlProvider>
   );
 
+  const initialState = {
+    register: {
+      validationApiRateLimited: false,
+    },
+    resetPassword: {},
+  };
+
   beforeEach(() => {
-    store = mockStore();
+    store = mockStore(initialState);
     configure({
       loggingService: { logError: jest.fn() },
       config: {
@@ -64,16 +77,19 @@ describe('ResetPasswordPage', () => {
     const password = 'test-password-1';
 
     store = mockStore({
+      ...initialState,
       resetPassword: {
         status: TOKEN_STATE.VALID,
       },
     });
 
-    auth.getHttpClient = jest.fn(() => ({
-      post: async () => ({
-        data: {},
-        catch: () => {},
-      }),
+    jest.mock('@edx/frontend-platform/auth', () => ({
+      getHttpClient: jest.fn(() => ({
+        post: async () => ({
+          data: {},
+          catch: () => {},
+        }),
+      })),
     }));
 
     store.dispatch = jest.fn(store.dispatch);
@@ -95,6 +111,7 @@ describe('ResetPasswordPage', () => {
 
   it('should show error messages for required fields on empty form submission', () => {
     store = mockStore({
+      ...initialState,
       resetPassword: {
         status: TOKEN_STATE.VALID,
       },
@@ -115,6 +132,7 @@ describe('ResetPasswordPage', () => {
 
   it('should show error message when new and confirm password do not match', () => {
     store = mockStore({
+      ...initialState,
       resetPassword: {
         status: TOKEN_STATE.VALID,
       },
@@ -131,6 +149,7 @@ describe('ResetPasswordPage', () => {
 
   it('should show reset password rate limit error', () => {
     store = mockStore({
+      ...initialState,
       resetPassword: {
         status: PASSWORD_RESET.FORBIDDEN_REQUEST,
       },
@@ -144,6 +163,7 @@ describe('ResetPasswordPage', () => {
 
   it('should show reset password internal server error', () => {
     store = mockStore({
+      ...initialState,
       resetPassword: {
         status: PASSWORD_RESET.INTERNAL_SERVER_ERROR,
       },
@@ -157,9 +177,37 @@ describe('ResetPasswordPage', () => {
 
   // ******** miscellaneous tests ********
 
-  it('check cookie rendered', () => {
+  it('should call validation on password field when blur event fires', () => {
     const resetPasswordPage = mount(reduxWrapper(<IntlResetPasswordPage {...props} />));
-    expect(resetPasswordPage.find(<CookiePolicyBanner />)).toBeTruthy();
+    const expectedText = 'Password criteria has not been metPassword must contain at least 8 characters, at least one letter, and at least one number';
+    resetPasswordPage.find('input#newPassword').simulate('change', { target: { value: 'aziz156', name: 'newPassword' } });
+    resetPasswordPage.find('input#newPassword').simulate('blur', { target: { value: 'aziz156', name: 'newPassword' } });
+    expect(resetPasswordPage.find('div[feedback-for="newPassword"]').text()).toEqual(expectedText);
+  });
+
+  it('show spinner when api call is pending', () => {
+    store.dispatch = jest.fn(store.dispatch);
+    props = {
+      status:
+      TOKEN_STATE.PENDING,
+    };
+    mount(reduxWrapper(<IntlResetPasswordPage {...props} />));
+    expect(store.dispatch).toHaveBeenCalledWith(validateToken(token));
+  });
+  it('should redirect the user to Reset password email screen ', async () => {
+    props = {
+      status:
+      PASSWORD_RESET_ERROR,
+    };
+    mount(reduxWrapper(<IntlResetPasswordPage {...props} />));
+    expect(mockedNavigator).toHaveBeenCalledWith(RESET_PAGE);
+  });
+  it('should redirect the user to root url of the application ', async () => {
+    props = {
+      status: SUCCESS,
+    };
+    mount(reduxWrapper(<IntlResetPasswordPage {...props} />));
+    expect(mockedNavigator).toHaveBeenCalledWith(LOGIN_PAGE);
   });
 
   it('show spinner during token validation', () => {
@@ -170,15 +218,11 @@ describe('ResetPasswordPage', () => {
   // ******** redirection tests ********
 
   it('by clicking on sign in tab should redirect onto login page', async () => {
-    const resetPasswordPage = mount(reduxWrapper(
-      <Router history={history}>
-        <IntlResetPasswordPage {...props} />
-      </Router>,
-    ));
+    const resetPasswordPage = mount(reduxWrapper(<IntlResetPasswordPage {...props} />));
 
     await act(async () => { await resetPasswordPage.find('nav').find('a').first().simulate('click'); });
 
     resetPasswordPage.update();
-    expect(history.location.pathname).toEqual(LOGIN_PAGE);
+    expect(mockedNavigator).toHaveBeenCalledWith(LOGIN_PAGE);
   });
 });

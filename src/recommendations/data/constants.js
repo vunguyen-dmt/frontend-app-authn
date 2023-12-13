@@ -9,3 +9,10 @@ export const EDUCATION_LEVEL_MAPPING = {
   hs: 'Introductory',
   jhs: 'Introductory',
 };
+
+export const PERSONALIZED = 'personalized';
+
+export const LEVEL_FACET = 'level';
+export const PRODUCT_FACET = 'product';
+export const PRODUCT_TYPE_COURSE = 'course';
+export const MAX_RECOMMENDATIONS = 4;

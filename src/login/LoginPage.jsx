@@ -13,6 +13,14 @@ import { Helmet } from 'react-helmet';
 import Skeleton from 'react-loading-skeleton';
 import { Link } from 'react-router-dom';
 
+import AccountActivationMessage from './AccountActivationMessage';
+import {
+  loginRemovePasswordResetBanner, loginRequest, loginRequestFailure, loginRequestReset, setLoginFormData,
+} from './data/actions';
+import { INVALID_FORM, TPA_AUTHENTICATION_FAILURE } from './data/constants';
+import { loginErrorSelector, loginFormDataSelector, loginRequestSelector } from './data/selectors';
+import LoginFailureMessage from './LoginFailure';
+import messages from './messages';
 import {
   FormGroup, InstitutionLogistration, PasswordField, RedirectLogistration,
   RenderInstitutionButton, SocialAuthProviders, ThirdPartyAuthAlert,
@@ -28,19 +36,10 @@ import {
   getAllPossibleQueryParams,
   getTpaHint,
   getTpaProvider,
-  setSurveyCookie,
   updatePathWithQueryParams,
   windowScrollTo,
 } from '../data/utils';
 import ResetPasswordSuccess from '../reset-password/ResetPasswordSuccess';
-import AccountActivationMessage from './AccountActivationMessage';
-import {
-  loginRemovePasswordResetBanner, loginRequest, loginRequestFailure, loginRequestReset, setLoginFormData,
-} from './data/actions';
-import { INVALID_FORM, TPA_AUTHENTICATION_FAILURE } from './data/constants';
-import { loginErrorSelector, loginFormDataSelector, loginRequestSelector } from './data/selectors';
-import LoginFailureMessage from './LoginFailure';
-import messages from './messages';
 
 class LoginPage extends React.Component {
   constructor(props, context) {
@@ -148,7 +147,7 @@ class LoginPage extends React.Component {
 
     if (email === '') {
       errors.emailOrUsername = this.props.intl.formatMessage(messages['email.validation.message']);
-    } else if (email.length < 3) {
+    } else if (email.length < 2) {
       errors.emailOrUsername = this.props.intl.formatMessage(messages['username.or.email.format.validation.less.chars.message']);
     } else {
       errors.emailOrUsername = '';
@@ -229,16 +228,6 @@ class LoginPage extends React.Component {
         errorMessage: thirdPartyAuthContext.errorMessage,
       };
       tpaAuthenticationError.errorCode = TPA_AUTHENTICATION_FAILURE;
-    }
-    if (this.props.loginResult.success) {
-      setSurveyCookie('login');
-
-      // Fire optimizely events
-      window.optimizely = window.optimizely || [];
-      window.optimizely.push({
-        type: 'event',
-        eventName: 'authn-login-coversion',
-      });
     }
 
     return (

@@ -1,11 +1,17 @@
-import { COMPLETE_STATE, PENDING_STATE } from '../../data/constants';
 import { THIRD_PARTY_AUTH_CONTEXT, THIRD_PARTY_AUTH_CONTEXT_CLEAR_ERROR_MSG } from './actions';
+import { COMPLETE_STATE, FAILURE_STATE, PENDING_STATE } from '../../data/constants';
 
 export const defaultState = {
-  fieldDescriptions: {},
-  optionalFields: {},
+  fieldDescriptions: {
+    fields: {},
+  },
+  optionalFields: {
+    fields: {},
+    extended_profile: [],
+  },
   thirdPartyAuthApiStatus: null,
   thirdPartyAuthContext: {
+    autoSubmitRegForm: false,
     currentProvider: null,
     finishAuthUrl: null,
     countryCode: null,
@@ -13,6 +19,7 @@ export const defaultState = {
     secondaryProviders: [],
     pipelineUserDetails: null,
     errorMessage: null,
+    welcomePageRedirectUrl: null,
   },
 };
 
@@ -35,7 +42,11 @@ const reducer = (state = defaultState, action = {}) => {
     case THIRD_PARTY_AUTH_CONTEXT.FAILURE:
       return {
         ...state,
-        thirdPartyAuthApiStatus: COMPLETE_STATE,
+        thirdPartyAuthApiStatus: FAILURE_STATE,
+        thirdPartyAuthContext: {
+          ...state.thirdPartyAuthContext,
+          errorMessage: null,
+        },
       };
     case THIRD_PARTY_AUTH_CONTEXT_CLEAR_ERROR_MSG:
       return {
