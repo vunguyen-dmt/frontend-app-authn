@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 
 import messages from './messages';
 
-const AuthSmallLayout = ({ username }) => {
+const SmallLayout = ({ username }) => {
   const { formatMessage } = useIntl();
 
   return (
@@ -16,7 +16,7 @@ const AuthSmallLayout = ({ username }) => {
       <Hyperlink destination={getConfig().MARKETING_SITE_BASE_URL}>
         <Image className="logo-small" alt={getConfig().SITE_NAME} src={getConfig().LOGO_URL} />
       </Hyperlink>
-      <div className="d-flex align-items-center mb-3 mt-3 mr-3">
+      <div className="d-flex align-items-center m-3.5">
         <div className="small-yellow-line mt-4.5" />
         <div>
           <h1 className="h5 data-hj-suppress">
@@ -34,8 +34,8 @@ const AuthSmallLayout = ({ username }) => {
   );
 };
 
-AuthSmallLayout.propTypes = {
+SmallLayout.propTypes = {
   username: PropTypes.string.isRequired,
 };
 
-export default AuthSmallLayout;
+export default SmallLayout;
