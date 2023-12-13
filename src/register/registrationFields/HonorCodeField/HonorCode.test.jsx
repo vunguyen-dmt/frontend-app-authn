@@ -4,7 +4,7 @@ import { getConfig, mergeConfig } from '@edx/frontend-platform';
 import { injectIntl, IntlProvider } from '@edx/frontend-platform/i18n';
 import { mount } from 'enzyme';
 
-import HonorCode from '../registrationFields/HonorCode';
+import { HonorCode } from '../index';
 
 const IntlHonorCode = injectIntl(HonorCode);
 
@@ -55,9 +55,9 @@ describe('HonorCodeTest', () => {
         <IntlHonorCode fieldType="tos_and_honor_code" onChangeHandler={changeHandler} />
       </IntlProvider>,
     );
-    const expectedMsg = 'By creating an account, you agree to the Terms of Service and Honor Codein a new tab and you '
+    const expectedMsg = 'By creating an account, you agree to the Terms of Service and Honor Code and you '
                         + 'acknowledge that Your Platform Name Here and each Member process your personal data in '
-                        + 'accordance with the Privacy Policyin a new tab.';
+                        + 'accordance with the Privacy Policy.';
     const field = HonorCodeProps.find('#honor-code');
     expect(field.text()).toEqual(expectedMsg);
   });

@@ -5,7 +5,7 @@ import { FormattedMessage, useIntl } from '@edx/frontend-platform/i18n';
 import { Form, Hyperlink } from '@edx/paragon';
 import PropTypes from 'prop-types';
 
-import messages from '../messages';
+import messages from '../../messages';
 
 const TermsOfService = (props) => {
   const { formatMessage } = useIntl();
@@ -16,7 +16,7 @@ const TermsOfService = (props) => {
   return (
     <div id="terms-of-service" className="micro text-muted">
       <Form.Checkbox
-        className="opt-checkbox mt-1"
+        className="form-field--checkbox mt-1"
         id="tos"
         checked={value}
         name="terms_of_service"

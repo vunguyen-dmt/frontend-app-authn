@@ -5,7 +5,7 @@ import { FormattedMessage, useIntl } from '@edx/frontend-platform/i18n';
 import { Form, Hyperlink } from '@edx/paragon';
 import PropTypes from 'prop-types';
 
-import messages from '../messages';
+import messages from '../../messages';
 
 const HonorCode = (props) => {
   const { formatMessage } = useIntl();
@@ -30,12 +30,22 @@ const HonorCode = (props) => {
           values={{
             platformName: getConfig().SITE_NAME,
             tosAndHonorCode: (
-              <Hyperlink variant="muted" destination={getConfig().TOS_AND_HONOR_CODE || '#'} target="_blank">
+              <Hyperlink
+                className="inline-link"
+                destination={getConfig().TOS_AND_HONOR_CODE || '#'}
+                target="_blank"
+                showLaunchIcon={false}
+              >
                 {formatMessage(messages['terms.of.service.and.honor.code'])}
               </Hyperlink>
             ),
             privacyPolicy: (
-              <Hyperlink variant="muted" destination={getConfig().PRIVACY_POLICY || '#'} target="_blank">
+              <Hyperlink
+                className="inline-link"
+                destination={getConfig().PRIVACY_POLICY || '#'}
+                target="_blank"
+                showLaunchIcon={false}
+              >
                 {formatMessage(messages['privacy.policy'])}
               </Hyperlink>
             ),
@@ -48,7 +58,7 @@ const HonorCode = (props) => {
   return (
     <div id="honor-code" className="micro text-muted">
       <Form.Checkbox
-        className="opt-checkbox mt-1"
+        className="form-field--checkbox mt-1"
         id="honor-code"
         checked={value}
         name="honor_code"

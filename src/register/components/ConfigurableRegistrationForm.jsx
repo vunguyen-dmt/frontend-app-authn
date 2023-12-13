@@ -1,15 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { getConfig } from '@edx/frontend-platform';
-import { useIntl } from '@edx/frontend-platform/i18n';
+import { getCountryList, getLocale, useIntl } from '@edx/frontend-platform/i18n';
 import PropTypes from 'prop-types';
 
-import { FormFieldRenderer } from '../field-renderer';
-import { FIELDS } from './data/constants';
-import { validateCountryField } from './data/utils';
-import messages from './messages';
-import { HonorCode, TermsOfService } from './registrationFields';
-import CountryField from './registrationFields/CountryField';
+import { FormFieldRenderer } from '../../field-renderer';
+import { FIELDS } from '../data/constants';
+import messages from '../messages';
+import { CountryField, HonorCode, TermsOfService } from '../RegistrationFields';
 
 /**
  * Fields on registration page that are not the default required fields (name, email, username, password).
@@ -26,15 +24,16 @@ import CountryField from './registrationFields/CountryField';
 const ConfigurableRegistrationForm = (props) => {
   const { formatMessage } = useIntl();
   const {
-    countryList,
     email,
     fieldDescriptions,
     fieldErrors,
     formFields,
     setFieldErrors,
-    setFocusedField,
     setFormFields,
+    autoSubmitRegistrationForm,
   } = props;
+
+  const countryList = useMemo(() => getCountryList(getLocale()), []);
 
   let showTermsOfServiceAndHonorCode = false;
   let showCountryField = false;
@@ -53,14 +52,43 @@ const ConfigurableRegistrationForm = (props) => {
     }
   });
 
+  /**
+   * If auto submitting register form, we will check tos and honor code fields if they exist for feature parity.
+   */
+  useEffect(() => {
+    if (autoSubmitRegistrationForm) {
+      if (Object.keys(fieldDescriptions).includes(FIELDS.HONOR_CODE)) {
+        setFormFields(prevState => ({
+          ...prevState,
+          [FIELDS.HONOR_CODE]: true,
+        }));
+      }
+      if (Object.keys(fieldDescriptions).includes(FIELDS.TERMS_OF_SERVICE)) {
+        setFormFields(prevState => ({
+          ...prevState,
+          [FIELDS.TERMS_OF_SERVICE]: true,
+        }));
+      }
+    }
+  }, [autoSubmitRegistrationForm]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleErrorChange = (fieldName, error) => {
+    if (fieldName) {
+      setFieldErrors(prevErrors => ({
+        ...prevErrors,
+        [fieldName]: error,
+      }));
+    }
+  };
+
   const handleOnChange = (event, countryValue = null) => {
-    const { name, type } = event.target;
+    const { name } = event.target;
     let value;
     if (countryValue) {
       value = { ...countryValue };
     } else {
       value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-      if (type === 'checkbox') {
+      if (event.target.type === 'checkbox') {
         setFieldErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
       }
     }
@@ -70,28 +98,17 @@ const ConfigurableRegistrationForm = (props) => {
   const handleOnBlur = (event) => {
     const { name, value } = event.target;
     let error = '';
-    if (name === 'country') {
-      const countryValidation = validateCountryField(
-        value.trim(), countryList, formatMessage(messages['empty.country.field.error']),
-      );
-      const { countryCode, displayValue } = countryValidation;
-      error = countryValidation.error;
-      setFormFields(prevState => ({ ...prevState, country: { countryCode, displayValue } }));
-    } else if (!value || !value.trim()) {
+    if ((!value || !value.trim()) && fieldDescriptions[name]?.error_message) {
       error = fieldDescriptions[name].error_message;
     } else if (name === 'confirm_email' && value !== email) {
       error = formatMessage(messages['email.do.not.match']);
     }
-    setFocusedField(null);
     setFieldErrors(prevErrors => ({ ...prevErrors, [name]: error }));
   };
 
   const handleOnFocus = (event) => {
     const { name } = event.target;
     setFieldErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
-    // Since we are removing the form errors from the focused field, we will
-    // need to rerun the validation for focused field on form submission.
-    setFocusedField(name);
   };
 
   if (flags.showConfigurableRegistrationFields) {
@@ -154,6 +171,7 @@ const ConfigurableRegistrationForm = (props) => {
           selectedCountry={formFields.country}
           errorMessage={fieldErrors.country || ''}
           onChangeHandler={handleOnChange}
+          handleErrorChange={handleErrorChange}
           onBlurHandler={handleOnBlur}
           onFocusHandler={handleOnFocus}
         />
@@ -171,7 +189,7 @@ const ConfigurableRegistrationForm = (props) => {
             name: 'marketingEmailsOptIn',
           }}
           value={formFields.marketingEmailsOptIn}
-          className="opt-checkbox"
+          className="form-field--checkbox"
           onChangeHandler={handleOnChange}
           handleBlur={handleOnBlur}
           handleFocus={handleOnFocus}
@@ -199,7 +217,6 @@ const ConfigurableRegistrationForm = (props) => {
 };
 
 ConfigurableRegistrationForm.propTypes = {
-  countryList: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   email: PropTypes.string.isRequired,
   fieldDescriptions: PropTypes.shape({}),
   fieldErrors: PropTypes.shape({
@@ -214,12 +231,13 @@ ConfigurableRegistrationForm.propTypes = {
     marketingEmailsOptIn: PropTypes.bool,
   }).isRequired,
   setFieldErrors: PropTypes.func.isRequired,
-  setFocusedField: PropTypes.func.isRequired,
   setFormFields: PropTypes.func.isRequired,
+  autoSubmitRegistrationForm: PropTypes.bool,
 };
 
 ConfigurableRegistrationForm.defaultProps = {
   fieldDescriptions: {},
+  autoSubmitRegistrationForm: false,
 };
 
 export default ConfigurableRegistrationForm;

@@ -8,11 +8,11 @@ import Skeleton from 'react-loading-skeleton';
 import {
   RenderInstitutionButton,
   SocialAuthProviders,
-} from '../common-components';
+} from '../../common-components';
 import {
   PENDING_STATE, REGISTER_PAGE,
-} from '../data/constants';
-import messages from './messages';
+} from '../../data/constants';
+import messages from '../messages';
 
 /**
  * This component renders the Single sign-on (SSO) buttons for the providers passed.

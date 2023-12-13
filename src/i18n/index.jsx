@@ -1,43 +1,43 @@
-import arMessages from './messages/ar.json';
-import caMessages from './messages/ca.json';
-// no need to import en messages-- they are in the defaultMessage field
-import dedeMessages from './messages/de_DE.json';
-import es419Messages from './messages/es_419.json';
-import frMessages from './messages/fr.json';
-import heMessages from './messages/he.json';
-import hiMessages from './messages/hi.json';
-import idMessages from './messages/id.json';
-import ititMessages from './messages/it_IT.json';
-import kokrMessages from './messages/ko_kr.json';
-import plMessages from './messages/pl.json';
-import ptbrMessages from './messages/pt_br.json';
-import ptptMessages from './messages/pt_PT.json';
-import ruMessages from './messages/ru.json';
-import thMessages from './messages/th.json';
-import ukMessages from './messages/uk.json';
-import zhcnMessages from './messages/zh_CN.json';
-import viMessages from './messages/vi.json';
+import { messages as paragonMessages } from '@edx/paragon';
 
-const messages = {
+import arMessages from './messages/ar.json';
+import deMessages from './messages/de.json';
+import deDEMessages from './messages/de_DE.json';
+import es419Messages from './messages/es_419.json';
+import faIRMessages from './messages/fa_IR.json';
+import frMessages from './messages/fr.json';
+import frCAMessages from './messages/fr_CA.json';
+import hiMessages from './messages/hi.json';
+import itMessages from './messages/it.json';
+import itITMessages from './messages/it_IT.json';
+import ptMessages from './messages/pt.json';
+import ptPTMessages from './messages/pt_PT.json';
+import ruMessages from './messages/ru.json';
+import ukMessages from './messages/uk.json';
+import zhCNMessages from './messages/zh_CN.json';
+import viMessages from './messages/vi.json';
+// no need to import en messages-- they are in the defaultMessage field
+
+const appMessages = {
   ar: arMessages,
-  es: es419Messages, // Prospectus uses es language code for spanish, added `es` option and pointed to es-419 strings.
+  de: deMessages,
+  'de-de': deDEMessages,
   'es-419': es419Messages,
+  'fa-ir': faIRMessages,
   fr: frMessages,
-  'zh-cn': zhcnMessages,
-  'it-it': ititMessages,
-  'pt-pt': ptptMessages,
-  'de-de': dedeMessages,
-  ca: caMessages,
-  he: heMessages,
-  id: idMessages,
-  'ko-kr': kokrMessages,
-  pl: plMessages,
-  'pt-br': ptbrMessages,
-  ru: ruMessages,
-  th: thMessages,
-  uk: ukMessages,
+  'fr-ca': frCAMessages,
   hi: hiMessages,
+  it: itMessages,
+  'it-it': itITMessages,
+  pt: ptMessages,
+  'pt-pt': ptPTMessages,
+  ru: ruMessages,
+  uk: ukMessages,
+  'zh-cn': zhCNMessages,
   vi: viMessages,
 };
 
-export default messages;
+export default [
+  paragonMessages,
+  appMessages,
+];
