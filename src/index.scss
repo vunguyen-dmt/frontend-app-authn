@@ -4,3 +4,31 @@
 @import "~@edx/brand/paragon/overrides";
 
 @import "sass/style";
+
+.bg-primary-400 {
+    background-color: #0e3639!important;
+}
+
+.logo {
+    height: 70px;
+    width: auto;
+    max-width: 100%;
+}
+
+[class*="-screen-svg-primary"] {
+    background-color: white!important;
+    fill: #0e3639!important;
+}
+
+.site-name-1 {
+    color: #0063CD!important;
+    white-space: nowrap;
+}
+.site-name-2 {
+    color: #F21A1A!important;
+    white-space: nowrap;
+}
+
+[class*="-screen-top-strip"] {
+    height: 0!important;
+}
