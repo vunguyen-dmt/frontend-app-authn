@@ -1,5 +1,6 @@
 {
     "start.learning": "Bắt đầu học",
+    "start.with": "với",
     "with.site.name": "với {siteName}",
     "complete.your.profile.1": "Hoàn tất",
     "complete.your.profile.2": "hồ sơ của bạn",
@@ -59,7 +60,7 @@
     "account.locked.out.message.2": "Để đảm bảo an toàn, bạn có thể {resetLink} trước khi thử lại.",
     "login.incorrect.credentials.error.with.reset.link": "Tên người dùng, email hoặc mật khẩu bạn đã nhập không chính xác. Vui lòng thử lại hoặc {resetLink}.",
     "login.page.title": "Đăng nhập | {siteName}",
-    "login.user.identity.label": "Tài khoản hoặc Email",
+    "login.user.identity.label": "Mã số sinh viên hoặc Email",
     "login.password.label": "Mật khẩu",
     "sign.in.button": "Đăng nhập",
     "forgot.password": "Quên mật khẩu",
