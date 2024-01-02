@@ -1,4 +1,7 @@
 {
+    "start.learning": "Bắt đầu học",
+    "start.with": "với",
+    "with.site.name": "với {siteName}",
     "account.activation.error.message": "Đã xảy ra lỗi, vui lòng {supportLink} giải quyết vấn đề này.",
     "account.activation.error.message.title": "Tài khoản của bạn không thể được kích hoạt",
     "account.activation.info.message": "Tài khoản này đã được kích hoạt.",
@@ -107,6 +110,7 @@
     "login.locked.out.error.message": "Để bảo vệ tài khoản của bạn, nó đã tạm thời bị khóa. Hãy thử lại sau {lockedOutPeriod} phút.",
     "login.other.options.heading": "Hoặc đăng nhập với:",
     "login.page.title": "Đăng nhập | {siteName}",
+    "login.user.identity.label": "Mã số sinh viên hoặc Email",
     "login.password.label": "Mật khẩu",
     "login.rate.limit.reached.message": "Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau.",
     "login.third.party.auth.account.not.linked": "Bạn đã đăng nhập thành công vào {currentProvider} nhưng tài khoản {currentProvider} của bạn không có tài khoản {platformName} được liên kết. Để liên kết các tài khoản của bạn, hãy đăng nhập ngay bây giờ bằng mật khẩu {platformName} của bạn.",

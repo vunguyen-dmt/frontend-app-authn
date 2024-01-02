@@ -27,12 +27,9 @@ const MediumLayout = () => {
                   { 'ml-4.5': getConfig().SITE_NAME !== 'edX' },
                 )}
               >
-                <span>
-                  {formatMessage(messages['start.learning'])}{' '}
-                  <span className="text-accent-a d-inline-block">
-                    {formatMessage(messages['with.site.name'], { siteName: getConfig().SITE_NAME })}
-                  </span>
-                </span>
+                <span className="mr-2">{formatMessage(messages['start.learning'])}&nbsp;{formatMessage(messages['start.with'])}</span>
+                {getConfig().SITE_NAME === 'HUTECH eLearning' && <> <span className="site-name-1">HUTECH</span> <span className="site-name-2">eLearning</span></>}
+                {getConfig().SITE_NAME !== 'HUTECH eLearning' && <span className="text-accent-a d-inline-block">{getConfig().SITE_NAME}</span>}
               </h1>
             </div>
           </div>

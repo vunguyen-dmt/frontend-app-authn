@@ -6,6 +6,11 @@ const messages = defineMessages({
     defaultMessage: 'Start learning',
     description: 'Header text for logistration MFE pages',
   },
+  'start.with': {
+    id: 'start.with',
+    defaultMessage: 'with',
+    description: '',
+  },
   'with.site.name': {
     id: 'with.site.name',
     defaultMessage: 'with {siteName}',
