@@ -4,3 +4,13 @@
 @import "~@edx/brand/paragon/overrides";
 
 @import "sass/style";
+
+.logo {
+    max-width: 100%;
+    width: auto!important;
+    height: 70px;
+}
+
+.display-2 .text-accent-a{
+    color: white!important;
+}

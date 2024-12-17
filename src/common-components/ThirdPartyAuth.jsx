@@ -48,7 +48,7 @@ const ThirdPartyAuth = (props) => {
             : formatMessage(messages['registration.other.options.heading'])}
         </div>
       )}
-      {(isLoginPage && !isEnterpriseLoginDisabled && isSocialAuthActive) && (
+      {(false && isLoginPage && !isEnterpriseLoginDisabled && isSocialAuthActive) && (
         <Hyperlink
           className={classNames(
             'btn btn-link btn-sm text-body p-0',
