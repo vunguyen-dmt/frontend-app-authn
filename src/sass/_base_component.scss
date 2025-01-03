@@ -129,8 +129,6 @@
   }
 }
 
-.extra-large-screen-top-stripe { display: none; }
-
 @include media-breakpoint-up('xl') {
  .extra-large-screen-top-stripe {
    display: flex;

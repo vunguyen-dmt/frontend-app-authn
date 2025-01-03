@@ -14,3 +14,15 @@
 .display-2 .text-accent-a{
     color: white!important;
 }
+
+.bg-primary-400 {
+    background-color: #001b33!important;
+}
+
+[class*="screen-svg-primary"] {
+    fill: #001b33!important;;
+}
+
+[class*="screen-top-stripe"] {
+    display: none!important;
+}
