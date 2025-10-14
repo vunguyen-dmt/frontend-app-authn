@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { getConfig } from '@edx/frontend-platform';
 import { useIntl } from '@edx/frontend-platform/i18n';
@@ -20,6 +20,15 @@ const SocialAuthProviders = (props) => {
     const url = e.currentTarget.dataset.providerUrl;
     window.location.href = getConfig().LMS_BASE_URL + url;
   }
+
+  useEffect(() => {
+    if (window.location.href.includes('mobile-browser-auth')) {
+      const hutechidProvider = socialAuthProviders.filter(_ => _.id === 'oa2-HUTECHID');
+      if (hutechidProvider) {
+        window.location.href = getConfig().LMS_BASE_URL + hutechidProvider[0].loginUrl;
+      }
+    }
+  }, []);
 
   const socialAuth = socialAuthProviders.map((provider, index) => (
     <button
